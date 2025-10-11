@@ -29,6 +29,33 @@ class Organization extends Model
         'status',
         'trial_ends_at',
         'settings',
+        
+        // Onboarding - Company Info
+        'organization_type',
+        'sector',
+        'timezone',
+        'team_size',
+        
+        // Onboarding - CommCare Config
+        'commcare_domain',
+        'commcare_project_name',
+        'commcare_api_key',
+        'commcare_app_id',
+        
+        // Onboarding - Phone Validation
+        'primary_country',
+        'allowed_prefixes',
+        'phone_validation_mode',
+        'mobile_only',
+        'auto_format_e164',
+        
+        // Onboarding - Field Mappings
+        'field_mappings',
+        
+        // Onboarding - Tracking
+        'onboarding_completed',
+        'onboarding_completed_at',
+        'onboarding_step',
     ];
 
     /**
@@ -39,6 +66,12 @@ class Organization extends Model
     protected $casts = [
         'trial_ends_at' => 'datetime',
         'settings' => 'array',
+        'allowed_prefixes' => 'array',
+        'field_mappings' => 'array',
+        'onboarding_completed' => 'boolean',
+        'onboarding_completed_at' => 'datetime',
+        'mobile_only' => 'boolean',
+        'auto_format_e164' => 'boolean',
     ];
 
     /**
@@ -146,6 +179,75 @@ class Organization extends Model
     public function admins(): BelongsToMany
     {
         return $this->users()->whereIn('role', ['owner', 'admin']);
+    }
+
+    /**
+     * Check if onboarding is completed
+     */
+    public function hasCompletedOnboarding(): bool
+    {
+        return $this->onboarding_completed === true;
+    }
+
+    /**
+     * Mark onboarding as completed
+     */
+    public function completeOnboarding(): void
+    {
+        $this->update([
+            'onboarding_completed' => true,
+            'onboarding_completed_at' => now(),
+            'onboarding_step' => 6, // Dernière étape
+        ]);
+    }
+
+    /**
+     * Update onboarding step
+     */
+    public function updateOnboardingStep(int $step): void
+    {
+        $this->update(['onboarding_step' => $step]);
+    }
+
+    /**
+     * Get onboarding progress percentage
+     */
+    public function onboardingProgress(): int
+    {
+        if ($this->onboarding_completed) {
+            return 100;
+        }
+        
+        // 6 étapes total
+        return (int) (($this->onboarding_step / 6) * 100);
+    }
+
+    /**
+     * Check if CommCare is configured
+     */
+    public function hasCommCareConfig(): bool
+    {
+        return !empty($this->commcare_domain) && 
+               !empty($this->commcare_api_key);
+    }
+
+    /**
+     * Check if phone validation is configured
+     */
+    public function hasPhoneValidationConfig(): bool
+    {
+        return !empty($this->primary_country) && 
+               !empty($this->allowed_prefixes);
+    }
+
+    /**
+     * Check if field mappings are configured
+     */
+    public function hasFieldMappings(): bool
+    {
+        return !empty($this->field_mappings) && 
+               is_array($this->field_mappings) &&
+               count($this->field_mappings) > 0;
     }
 }
 
