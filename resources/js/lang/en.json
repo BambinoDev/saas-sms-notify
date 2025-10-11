@@ -1,0 +1,216 @@
+{
+  "app": {
+    "name": "S-Remind",
+    "tagline": "Automated SMS Reminders for CommCare"
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "cases": "Cases",
+    "sms_queue": "SMS Queue",
+    "templates": "Templates",
+    "rules": "Rules",
+    "analytics": "Analytics",
+    "settings": "Settings",
+    "support": "Support"
+  },
+  "common": {
+    "search": "Search",
+    "export": "Export",
+    "add": "Add",
+    "edit": "Edit",
+    "delete": "Delete",
+    "save": "Save",
+    "cancel": "Cancel",
+    "close": "Close",
+    "back": "Back",
+    "next": "Next",
+    "continue": "Continue",
+    "previous": "Previous",
+    "loading": "Loading...",
+    "no_data": "No data available",
+    "confirm": "Confirm",
+    "actions": "Actions",
+    "status": "Status",
+    "active": "Active",
+    "inactive": "Inactive",
+    "all": "All",
+    "sync": "Sync",
+    "sync_now": "Sync Now"
+  },
+  "auth": {
+    "login": "Login",
+    "register": "Register",
+    "logout": "Sign out",
+    "email": "Email",
+    "password": "Password",
+    "remember_me": "Remember me",
+    "forgot_password": "Forgot password?",
+    "reset_password": "Reset password",
+    "profile": "Profile"
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "subtitle": "Welcome back! Here's what's happening with your SMS campaigns.",
+    "stats": {
+      "total_cases": "Total Cases",
+      "active_sms": "Active SMS",
+      "pending_queue": "Pending Queue",
+      "success_rate": "Success Rate",
+      "from_last_month": "from last month",
+      "being_processed": "Being processed",
+      "scheduled_for_today": "Scheduled for today",
+      "excellent": "Excellent"
+    },
+    "recent_activity": "Recent Activity",
+    "view_all": "View all",
+    "quick_actions": "Quick Actions",
+    "activity": {
+      "sync_completed": "CommCare sync completed",
+      "sms_sent": "{count} SMS sent successfully",
+      "rule_activated": "New rule activated: {name}",
+      "sms_failed": "{count} SMS failed to send"
+    }
+  },
+  "cases": {
+    "title": "Cases",
+    "subtitle": "Manage all your CommCare cases in one place",
+    "add_case": "Add Case",
+    "all_cases": "All Cases",
+    "stats": {
+      "total": "Total Cases",
+      "active": "Active",
+      "inactive": "Inactive",
+      "with_phone": "With Phone"
+    },
+    "filters": {
+      "search_placeholder": "Search here...",
+      "all_status": "All Status",
+      "all_types": "All Types"
+    },
+    "table": {
+      "case": "Case",
+      "type": "Type",
+      "phone": "Phone",
+      "owner": "Owner",
+      "status": "Status",
+      "last_sync": "Last Sync",
+      "actions": "Actions",
+      "no_phone": "No phone"
+    },
+    "pagination": {
+      "showing": "Showing entries",
+      "of": "of"
+    },
+    "details": {
+      "title": "Case Details",
+      "basic_info": "Basic Information",
+      "contact_info": "Contact Information",
+      "sync_info": "Synchronization",
+      "case_id": "Case ID",
+      "name": "Name",
+      "case_type": "Case Type",
+      "phone_number": "Phone Number",
+      "no_phone_number": "No phone number",
+      "owner": "Owner",
+      "last_sync": "Last Sync",
+      "created_at": "Created At",
+      "next_visit": "Next Visit",
+      "send_sms": "Send SMS",
+      "edit_case": "Edit Case"
+    }
+  },
+  "onboarding": {
+    "welcome": {
+      "title": "Welcome to S-Remind",
+      "subtitle": "Let's set up your automated SMS reminder system",
+      "description": "This quick setup will help you configure your CommCare integration, phone validation, and SMS templates. It takes about 5 minutes.",
+      "get_started": "Get Started"
+    },
+    "company": {
+      "title": "Tell us about your organization",
+      "subtitle": "This information will help us configure your account",
+      "your_organization": "Your organization",
+      "industry": "Industry",
+      "organization_type": "Organization Type",
+      "timezone": "Timezone",
+      "team_size": "Team Size",
+      "note": "This information helps us personalize your experience and suggest SMS templates adapted to your sector."
+    },
+    "commcare": {
+      "title": "Connect your CommCare account",
+      "subtitle": "We need this information to synchronize your data",
+      "help": "Where to find this information?",
+      "help_text": "Log in to CommCare → Project Settings → API & Integrations",
+      "domain": "CommCare Domain",
+      "project_name": "CommCare Project Name",
+      "api_key": "API Key",
+      "app_id": "Application ID",
+      "test_connection": "Test connection",
+      "testing": "Testing...",
+      "security_notice": "Your credentials are encrypted and stored securely. We never share them with third parties."
+    },
+    "phone": {
+      "title": "Configure number validation",
+      "subtitle": "Define validation rules for your country",
+      "country": "Main Country",
+      "format_validated": "Validated Format",
+      "national_length": "National Length",
+      "digits": "digits",
+      "allowed_prefixes": "Allowed Prefixes",
+      "validation_mode": "Validation Mode",
+      "strict": "Strict (Recommended)",
+      "strict_desc": "Validates only numbers with allowed prefixes and exact length",
+      "lenient": "Lenient",
+      "lenient_desc": "Accepts numbers even without strict prefixes (length only)",
+      "mobile_only": "Mobile only",
+      "mobile_only_desc": "Reject landlines and accept only mobile numbers",
+      "auto_format": "Automatic E.164 formatting",
+      "auto_format_desc": "Automatically convert numbers to international format",
+      "example": "Example of valid number"
+    },
+    "mapping": {
+      "title": "Link your CommCare fields to SMS",
+      "subtitle": "Define how CommCare data will appear in your SMS",
+      "how_it_works": "How does it work?",
+      "how_it_works_text": "SMS variables like {case_name} will be replaced by your CommCare field values.",
+      "main_fields": "Main Fields",
+      "custom_fields": "Custom Fields (optional)",
+      "add_field": "Add field",
+      "sms_variable": "SMS Variable",
+      "commcare_field": "CommCare Field",
+      "sms_preview": "SMS Preview",
+      "preview_note": "This is an example. You can customize your SMS templates later."
+    },
+    "completion": {
+      "title": "Setup complete!",
+      "syncing": "Synchronization in progress...",
+      "syncing_subtitle": "We are importing your data from CommCare",
+      "completed": "completed",
+      "summary": "Summary of your configuration",
+      "next_steps": "Next steps",
+      "step1": "Create your SMS templates",
+      "step1_desc": "Customize messages for each type of appointment",
+      "step2": "Configure sending rules",
+      "step2_desc": "Define when to send reminders (D-2, D-7, etc.)",
+      "step3": "Activate automatic sending",
+      "step3_desc": "Launch your first automated SMS campaigns",
+      "go_to_dashboard": "Go to Dashboard",
+      "please_wait": "Please wait during synchronization..."
+    },
+    "steps": {
+      "welcome": "Welcome",
+      "start_configuration": "Start your configuration",
+      "company": "Company",
+      "organization_info": "Organization information",
+      "commcare": "CommCare",
+      "api_configuration": "API Configuration",
+      "phone": "Phone",
+      "number_validation": "Number validation",
+      "mapping": "Mapping",
+      "custom_fields": "Custom fields",
+      "completion": "Finalization",
+      "initial_sync": "Initial synchronization"
+    }
+  }
+}
+

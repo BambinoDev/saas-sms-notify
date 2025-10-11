@@ -1,0 +1,59 @@
+=== RAPPORT DIAGNOSTIC GÉNÉRATION SMS ===
+Date: 2025-10-02 14:19:33
+Heure serveur: UTC
+
+1. SCHEDULER STATUS:
+✅ Scheduler opérationnel
+- sync-commcare: 01:00 (prochaine exécution dans 10h)
+- generate-sms: 07:00 (prochaine exécution dans 16h)
+- cleanup-old-sms: Dimanche 03:00
+- archive-old-sms: 23:00
+- verify-closed-cases: Dimanche 02:00
+
+2. RÈGLES SMS:
+✅ 3 règles actives configurées
+- Rappel J-2 INTERFACE WEB TEST (j-2, 2 jours, 09:00)
+- Rappel CPN J+3 (J+3, 3 jours, 07:30)
+- Rappel Jour-J MODIFIÉ VIA API (jour-j, 0 jours, 06:00)
+
+3. DONNÉES FEMMES:
+✅ 43,830 femmes en base
+✅ 31,573 femmes éligibles SMS
+✅ 258 femmes avec RDV aujourd'hui (Jour-J)
+✅ 96 femmes avec RDV dans 2 jours (J-2)
+
+4. GÉNÉRATION MANUELLE:
+✅ Fonctionne parfaitement
+- J+3: 99 SMS générés
+- j-2: 96 SMS générés  
+- jour-j: 258 SMS générés
+- Total: 453 SMS créés
+
+5. PROBLÈME IDENTIFIÉ:
+❌ ERREUR dans GenerateSmsJob.php ligne 39
+- Code: Undefined array key "j_minus_2"
+- Cause: Le SmsService retourne des clés différentes de celles attendues
+- Impact: Le job échoue lors de l'exécution automatique
+
+6. LOGS LARAVEL:
+✅ Génération manuelle réussie (14:19:11)
+✅ Synchronisation CommCare réussie (13:28:33)
+❌ Aucun log d'exécution automatique du scheduler
+
+7. CONFIGURATION TIMEZONE:
+⚠️ Problème de timezone
+- App timezone: UTC
+- Scheduler configuré pour Africa/Abidjan
+- Décalage possible dans l'exécution
+
+8. SOLUTION REQUISE:
+1. Corriger GenerateSmsJob.php pour utiliser les bonnes clés
+2. Vérifier la configuration timezone
+3. Tester l'exécution automatique
+
+=== CONCLUSION ===
+Le système fonctionne parfaitement en manuel mais échoue en automatique
+à cause d'une erreur de clé dans GenerateSmsJob.php.
+La génération manuelle a créé 453 SMS avec succès.
+
+

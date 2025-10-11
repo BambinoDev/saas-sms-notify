@@ -1,0 +1,66 @@
+# Laravel & PHP
+*.log
+.phpactor.json
+.phpunit.result.cache
+/.fleet
+/.idea
+/.nova
+/.phpunit.cache
+/.vscode
+/.zed
+/auth.json
+/vendor
+Homestead.json
+Homestead.yaml
+composer.phar
+
+# Environment files
+.env
+.env.*
+!env.example
+
+# Node.js & Frontend
+/node_modules
+/public/build
+/public/hot
+npm-debug.log
+yarn-error.log
+pnpm-debug.log
+
+# Storage & Cache
+/storage/*.key
+/storage/pail
+/storage/logs/*.log
+/bootstrap/cache/*.php
+!/.gitkeep
+
+# Public Storage
+/public/storage
+
+# Database
+*.sqlite
+*.sqlite-journal
+/database/*.sqlite
+/database/*.sqlite-journal
+
+# OS Files
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# Docker
+docker-compose.override.yml
+
+# IDE
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# Backup & Temp files
+*.bak
+*.tmp
+*.temp
+*~

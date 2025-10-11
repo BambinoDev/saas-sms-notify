@@ -1,0 +1,216 @@
+{
+  "app": {
+    "name": "S-Remind",
+    "tagline": "Rappels SMS Automatisés pour CommCare"
+  },
+  "nav": {
+    "dashboard": "Tableau de bord",
+    "cases": "Cases",
+    "sms_queue": "File SMS",
+    "templates": "Modèles",
+    "rules": "Règles",
+    "analytics": "Analytiques",
+    "settings": "Paramètres",
+    "support": "Support"
+  },
+  "common": {
+    "search": "Rechercher",
+    "export": "Exporter",
+    "add": "Ajouter",
+    "edit": "Modifier",
+    "delete": "Supprimer",
+    "save": "Enregistrer",
+    "cancel": "Annuler",
+    "close": "Fermer",
+    "back": "Retour",
+    "next": "Suivant",
+    "continue": "Continuer",
+    "previous": "Précédent",
+    "loading": "Chargement...",
+    "no_data": "Aucune donnée disponible",
+    "confirm": "Confirmer",
+    "actions": "Actions",
+    "status": "Statut",
+    "active": "Actif",
+    "inactive": "Inactif",
+    "all": "Tous",
+    "sync": "Synchroniser",
+    "sync_now": "Synchroniser maintenant"
+  },
+  "auth": {
+    "login": "Connexion",
+    "register": "Inscription",
+    "logout": "Déconnexion",
+    "email": "Email",
+    "password": "Mot de passe",
+    "remember_me": "Se souvenir de moi",
+    "forgot_password": "Mot de passe oublié ?",
+    "reset_password": "Réinitialiser le mot de passe",
+    "profile": "Profil"
+  },
+  "dashboard": {
+    "title": "Tableau de bord",
+    "subtitle": "Bienvenue ! Voici ce qui se passe avec vos campagnes SMS.",
+    "stats": {
+      "total_cases": "Total Cases",
+      "active_sms": "SMS Actifs",
+      "pending_queue": "File d'attente",
+      "success_rate": "Taux de succès",
+      "from_last_month": "du mois dernier",
+      "being_processed": "En cours de traitement",
+      "scheduled_for_today": "Programmés pour aujourd'hui",
+      "excellent": "Excellent"
+    },
+    "recent_activity": "Activité récente",
+    "view_all": "Voir tout",
+    "quick_actions": "Actions rapides",
+    "activity": {
+      "sync_completed": "Synchronisation CommCare terminée",
+      "sms_sent": "{count} SMS envoyés avec succès",
+      "rule_activated": "Nouvelle règle activée : {name}",
+      "sms_failed": "{count} SMS ont échoué"
+    }
+  },
+  "cases": {
+    "title": "Cases",
+    "subtitle": "Gérez tous vos cases CommCare en un seul endroit",
+    "add_case": "Ajouter un Case",
+    "all_cases": "Tous les Cases",
+    "stats": {
+      "total": "Total Cases",
+      "active": "Actifs",
+      "inactive": "Inactifs",
+      "with_phone": "Avec téléphone"
+    },
+    "filters": {
+      "search_placeholder": "Rechercher ici...",
+      "all_status": "Tous les statuts",
+      "all_types": "Tous les types"
+    },
+    "table": {
+      "case": "Case",
+      "type": "Type",
+      "phone": "Téléphone",
+      "owner": "Propriétaire",
+      "status": "Statut",
+      "last_sync": "Dernière synchro",
+      "actions": "Actions",
+      "no_phone": "Pas de téléphone"
+    },
+    "pagination": {
+      "showing": "Affichage des entrées",
+      "of": "sur"
+    },
+    "details": {
+      "title": "Détails du Case",
+      "basic_info": "Informations de base",
+      "contact_info": "Informations de contact",
+      "sync_info": "Synchronisation",
+      "case_id": "ID Case",
+      "name": "Nom",
+      "case_type": "Type de Case",
+      "phone_number": "Numéro de téléphone",
+      "no_phone_number": "Pas de numéro",
+      "owner": "Propriétaire",
+      "last_sync": "Dernière synchro",
+      "created_at": "Créé le",
+      "next_visit": "Prochaine visite",
+      "send_sms": "Envoyer SMS",
+      "edit_case": "Modifier Case"
+    }
+  },
+  "onboarding": {
+    "welcome": {
+      "title": "Bienvenue sur S-Remind",
+      "subtitle": "Configurons votre système de rappels SMS automatisés",
+      "description": "Cette configuration rapide vous aidera à configurer votre intégration CommCare, la validation des numéros et vos modèles SMS. Cela prend environ 5 minutes.",
+      "get_started": "Commencer"
+    },
+    "company": {
+      "title": "Parlez-nous de votre organisation",
+      "subtitle": "Ces informations nous permettront de mieux configurer votre compte",
+      "your_organization": "Votre organisation",
+      "industry": "Secteur d'activité",
+      "organization_type": "Type d'organisation",
+      "timezone": "Fuseau horaire",
+      "team_size": "Taille de l'équipe",
+      "note": "Ces informations nous aident à personnaliser votre expérience et à vous proposer des templates SMS adaptés à votre secteur."
+    },
+    "commcare": {
+      "title": "Connectez votre compte CommCare",
+      "subtitle": "Nous avons besoin de ces informations pour synchroniser vos données",
+      "help": "Où trouver ces informations ?",
+      "help_text": "Connectez-vous à CommCare → Paramètres du projet → API & Intégrations",
+      "domain": "Domaine CommCare",
+      "project_name": "Nom du projet CommCare",
+      "api_key": "Clé API",
+      "app_id": "ID de l'application",
+      "test_connection": "Tester la connexion",
+      "testing": "Test en cours...",
+      "security_notice": "Vos identifiants sont chiffrés et stockés en toute sécurité. Nous ne les partageons jamais avec des tiers."
+    },
+    "phone": {
+      "title": "Configurez la validation des numéros",
+      "subtitle": "Définissez les règles de validation pour votre pays",
+      "country": "Pays principal",
+      "format_validated": "Format validé",
+      "national_length": "Longueur nationale",
+      "digits": "chiffres",
+      "allowed_prefixes": "Préfixes autorisés",
+      "validation_mode": "Mode de validation",
+      "strict": "Strict (Recommandé)",
+      "strict_desc": "Valide uniquement les numéros avec préfixes autorisés et longueur exacte",
+      "lenient": "Souple",
+      "lenient_desc": "Accepte les numéros même sans préfixes stricts (longueur uniquement)",
+      "mobile_only": "Mobiles uniquement",
+      "mobile_only_desc": "Rejeter les numéros fixes et accepter uniquement les mobiles",
+      "auto_format": "Formatage automatique E.164",
+      "auto_format_desc": "Convertir automatiquement les numéros au format international",
+      "example": "Exemple de numéro valide"
+    },
+    "mapping": {
+      "title": "Liez vos champs CommCare aux SMS",
+      "subtitle": "Définissez comment les données CommCare apparaîtront dans vos SMS",
+      "how_it_works": "Comment ça fonctionne ?",
+      "how_it_works_text": "Les variables SMS comme {case_name} seront remplacées par les valeurs de vos champs CommCare.",
+      "main_fields": "Champs principaux",
+      "custom_fields": "Champs personnalisés (optionnel)",
+      "add_field": "Ajouter un champ",
+      "sms_variable": "Variable SMS",
+      "commcare_field": "Champ CommCare",
+      "sms_preview": "Aperçu du SMS",
+      "preview_note": "Ceci est un exemple. Vous pourrez personnaliser vos templates SMS plus tard."
+    },
+    "completion": {
+      "title": "Configuration terminée !",
+      "syncing": "Synchronisation en cours...",
+      "syncing_subtitle": "Nous importons vos données depuis CommCare",
+      "completed": "complété",
+      "summary": "Récapitulatif de votre configuration",
+      "next_steps": "Prochaines étapes",
+      "step1": "Créer vos templates SMS",
+      "step1_desc": "Personnalisez les messages pour chaque type de rendez-vous",
+      "step2": "Configurer les règles d'envoi",
+      "step2_desc": "Définissez quand envoyer les rappels (J-2, J-7, etc.)",
+      "step3": "Activer l'envoi automatique",
+      "step3_desc": "Lancez vos premiers envois SMS automatisés",
+      "go_to_dashboard": "Accéder au Dashboard",
+      "please_wait": "Veuillez patienter pendant la synchronisation..."
+    },
+    "steps": {
+      "welcome": "Bienvenue",
+      "start_configuration": "Commencez votre configuration",
+      "company": "Entreprise",
+      "organization_info": "Informations organisation",
+      "commcare": "CommCare",
+      "api_configuration": "Configuration API",
+      "phone": "Téléphonie",
+      "number_validation": "Validation numéros",
+      "mapping": "Mapping",
+      "custom_fields": "Champs personnalisés",
+      "completion": "Finalisation",
+      "initial_sync": "Synchronisation initiale"
+    }
+  }
+}
+
