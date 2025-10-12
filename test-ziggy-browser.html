@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Ziggy Route Helper</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test { margin: 10px 0; padding: 10px; border-left: 4px solid #ccc; }
+        .success { border-color: #28a745; background: #d4edda; }
+        .error { border-color: #dc3545; background: #f8d7da; }
+        .info { border-color: #17a2b8; background: #d1ecf1; }
+        pre { background: #f8f9fa; padding: 10px; border-radius: 4px; }
+    </style>
+</head>
+<body>
+    <h1>🧪 Test Ziggy Route Helper</h1>
+    
+    <div class="info">
+        <h3>📋 Instructions</h3>
+        <p>1. Ouvrez la console du navigateur (F12)</p>
+        <p>2. Allez sur <a href="http://localhost:8080/signup" target="_blank">http://localhost:8080/signup</a></p>
+        <p>3. Testez les commandes suivantes dans la console :</p>
+        <pre>// Test 1: Vérifier que route() est défini
+console.log('route() défini:', typeof route !== 'undefined');
+
+// Test 2: Tester la route signup
+console.log('route("signup"):', route('signup'));
+
+// Test 3: Tester la route signup.store
+console.log('route("signup.store"):', route('signup.store'));
+
+// Test 4: Tester avec paramètres (si applicable)
+console.log('route("dashboard"):', route('dashboard'));</pre>
+    </div>
+
+    <div class="test">
+        <h3>✅ Résultats attendus</h3>
+        <ul>
+            <li><code>typeof route !== 'undefined'</code> → <strong>true</strong></li>
+            <li><code>route('signup')</code> → <strong>"/signup"</strong></li>
+            <li><code>route('signup.store')</code> → <strong>"/signup"</strong></li>
+            <li><strong>Pas d'erreur</strong> "Cannot read properties of undefined"</li>
+        </ul>
+    </div>
+
+    <div class="test">
+        <h3>❌ Si vous voyez encore des erreurs</h3>
+        <p>Vérifiez que :</p>
+        <ul>
+            <li>Le serveur est démarré : <code>docker ps</code></li>
+            <li>La page se charge sans erreur 500</li>
+            <li>Le fichier <code>ziggy.js</code> est chargé (Network tab)</li>
+        </ul>
+    </div>
+
+    <script>
+        console.log('🧪 Page de test Ziggy chargée');
+        console.log('📍 Allez sur http://localhost:8080/signup pour tester route()');
+    </script>
+</body>
+</html>

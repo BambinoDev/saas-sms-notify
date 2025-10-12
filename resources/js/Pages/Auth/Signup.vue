@@ -2,6 +2,7 @@
 import { Head, useForm } from '@inertiajs/vue3';
 import Button from '@/Components/ui/Button.vue';
 import { ref, computed } from 'vue';
+import { route } from 'ziggy-js';
 
 const form = useForm({
   name: '',

@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Route Helper</title>
+</head>
+<body>
+    <h1>Test du helper route()</h1>
+    <p>Ouvrez la console pour voir les résultats.</p>
+    
+    <script>
+        // Simuler le test du helper route
+        console.log('Test du helper route():');
+        console.log('1. Vérification que route() est défini:', typeof route !== 'undefined');
+        
+        if (typeof route !== 'undefined') {
+            console.log('✅ Helper route() disponible');
+            try {
+                console.log('2. Test route("signup"):', route('signup'));
+                console.log('3. Test route("signup.store"):', route('signup.store'));
+            } catch (e) {
+                console.log('❌ Erreur lors du test:', e.message);
+            }
+        } else {
+            console.log('❌ Helper route() non disponible');
+        }
+    </script>
+</body>
+</html>

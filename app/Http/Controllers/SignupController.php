@@ -26,15 +26,15 @@ class SignupController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
             'password' => ['required', 'confirmed', Password::min(8)],
-            'organization_name' => ['required', 'string', 'max:255'],
-            'country' => ['required', 'string', 'size:2'], // Code ISO: CI, BF, ML, etc.
-            'accept_terms' => ['required', 'accepted'],
+            'company_name' => ['required', 'string', 'max:255'],
+            'country_iso' => ['required', 'string', 'size:2'], // Code ISO: CI, BF, ML, etc.
+            'agree_terms' => ['required', 'accepted'],
         ], [
             'email.unique' => 'Cet email est déjà utilisé.',
             'password.min' => 'Le mot de passe doit contenir au moins 8 caractères.',
             'password.confirmed' => 'Les mots de passe ne correspondent pas.',
-            'accept_terms.accepted' => 'Vous devez accepter les conditions d\'utilisation.',
-            'country.size' => 'Code pays invalide.',
+            'agree_terms.accepted' => 'Vous devez accepter les conditions d\'utilisation.',
+            'country_iso.size' => 'Code pays invalide.',
         ]);
 
         try {
@@ -46,14 +46,14 @@ class SignupController extends Controller
                 'email' => $validated['email'],
                 'password' => Hash::make($validated['password']),
                 'is_superadmin' => false,
-                'locale' => $this->getLocaleForCountry($validated['country']),
+                'locale' => $this->getLocaleForCountry($validated['country_iso']),
             ]);
 
             // 3. CRÉER ORGANIZATION
-            $slug = $this->generateUniqueSlug($validated['organization_name']);
+            $slug = $this->generateUniqueSlug($validated['company_name']);
             
             $organization = Organization::create([
-                'name' => $validated['organization_name'],
+                'name' => $validated['company_name'],
                 'slug' => $slug,
                 'status' => 'trial',
                 'trial_ends_at' => now()->addDays(14),
@@ -63,9 +63,9 @@ class SignupController extends Controller
                 'secondary_color' => '#10B981', // Vert
                 
                 // Config téléphone par défaut selon pays
-                'primary_country' => $validated['country'],
-                'timezone' => $this->getTimezoneForCountry($validated['country']),
-                'allowed_prefixes' => $this->getDefaultPrefixesForCountry($validated['country']),
+                'primary_country' => $validated['country_iso'],
+                'timezone' => $this->getTimezoneForCountry($validated['country_iso']),
+                'allowed_prefixes' => $this->getDefaultPrefixesForCountry($validated['country_iso']),
                 'phone_validation_mode' => 'strict',
                 'mobile_only' => true,
                 'auto_format_e164' => true,
