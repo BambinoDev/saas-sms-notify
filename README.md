@@ -12,7 +12,7 @@
 
 ## 🎯 À propos
 
-**CommCare SMS Automation** est une plateforme SaaS multi-tenant conçue pour automatiser l'envoi de rappels SMS aux femmes enceintes pour leurs consultations prénatales (CPN). La solution synchronise les données depuis CommCare et gère intelligemment l'envoi de SMS via Africa's Talking.
+**CommCare SMS Automation** est une plateforme SaaS multi-tenant conçue pour automatiser l'envoi de rappels SMS. La solution synchronise les données depuis CommCare et gère intelligemment l'envoi de SMS via Africa's Talking.
 
 ### 🌟 Fonctionnalités principales
 
