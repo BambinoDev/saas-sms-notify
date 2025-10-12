@@ -3,34 +3,3 @@ if (typeof window !== 'undefined' && typeof window.Ziggy !== 'undefined') {
   Object.assign(Ziggy.routes, window.Ziggy.routes);
 }
 export { Ziggy };
-
-
-// Rendre Ziggy disponible globalement
-window.Ziggy = Ziggy;
-
-// Fonction route globale
-window.route = function(name, params, absolute, config = Ziggy) {
-    if (typeof name === "undefined") {
-        return config.url;
-    }
-    
-    if (name === "") {
-        return config.url;
-    }
-    
-    if (!config.routes[name]) {
-        console.error("Ziggy Error: Route " + name + " is not defined.");
-        return null;
-    }
-    
-    const route = config.routes[name];
-    let url = config.url + "/" + route.uri;
-    
-    if (params) {
-        Object.keys(params).forEach(key => {
-            url = url.replace("{" + key + "}", params[key]);
-        });
-    }
-    
-    return url;
-};

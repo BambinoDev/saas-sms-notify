@@ -1,10 +1,10 @@
 import './bootstrap';
 import '../css/app.css';
-import './ziggy';
 import { createApp, h } from 'vue';
 import { createInertiaApp } from '@inertiajs/vue3';
 import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
 import { ZiggyVue } from 'ziggy-js';
+import { Ziggy } from './ziggy'; // ← MODIFIÉ : Import nommé
 import i18n from './i18n';
 
 createInertiaApp({
@@ -16,7 +16,7 @@ createInertiaApp({
     setup({ el, App, props, plugin }) {
         return createApp({ render: () => h(App, props) })
             .use(plugin)
-            .use(ZiggyVue)
+            .use(ZiggyVue, Ziggy) // ← MODIFIÉ : Passer Ziggy explicitement
             .use(i18n)
             .mount(el);
     },

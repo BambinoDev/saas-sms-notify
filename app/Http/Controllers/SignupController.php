@@ -46,7 +46,7 @@ class SignupController extends Controller
                 'email' => $validated['email'],
                 'password' => Hash::make($validated['password']),
                 'is_superadmin' => false,
-                'locale' => $this->getLocaleForCountry($validated['country_iso']),
+                // 'locale' => $this->getLocaleForCountry($validated['country_iso']), // Colonne locale n'existe pas
             ]);
 
             // 3. CRÉER ORGANIZATION
@@ -78,7 +78,7 @@ class SignupController extends Controller
             // 4. CRÉER SUBSCRIPTION TRIAL
             Subscription::create([
                 'organization_id' => $organization->id,
-                'plan' => 'trial',
+                'plan' => 'starter', // Plan starter pour trial (contrainte DB)
                 'status' => 'trial',
                 'sms_limit' => 100, // 100 SMS pour trial
                 'sms_used' => 0,
