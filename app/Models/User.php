@@ -149,4 +149,13 @@ class User extends Authenticatable
     {
         return $this->organizations()->first();
     }
+
+    /**
+     * Accessor: Get the user's primary organization
+     * Used in onboarding and other contexts where a single org is expected
+     */
+    public function getOrganizationAttribute(): ?Organization
+    {
+        return $this->firstOrganization();
+    }
 }

@@ -12,6 +12,7 @@ use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\SmsRuleController;
 use App\Http\Controllers\WomenController;
 use App\Http\Controllers\OrganizationSettingsController;
+use App\Http\Controllers\OnboardingController;
 use App\Http\Controllers\Admin\AdminAuthController;
 use App\Http\Controllers\Admin\AdminDashboardController;
 use App\Http\Controllers\Admin\AdminOrganizationsController;
@@ -35,53 +36,45 @@ Route::get('/signup', function () {
 
 Route::post('/signup', [SignupController::class, 'store'])->name('signup.store');
 
-// Onboarding routes (temporairement sans auth pour le MVP)
-Route::prefix('onboarding')->group(function () {
-    Route::get('/welcome', function () {
-        return Inertia::render('Onboarding/Welcome');
-    })->name('onboarding.welcome');
+// ============================================
+// ONBOARDING ROUTES
+// ============================================
 
-    Route::get('/company', function () {
-        return Inertia::render('Onboarding/Company');
-    })->name('onboarding.company');
-
-    Route::post('/company', function () {
-        // TODO: Sauvegarder les données
-        return redirect()->route('onboarding.commcare');
-    })->name('onboarding.company.store');
-
-    Route::get('/commcare', function () {
-        return Inertia::render('Onboarding/CommCare');
-    })->name('onboarding.commcare');
-
-    Route::post('/commcare', function () {
-        // TODO: Sauvegarder et valider les credentials
-        return redirect()->route('onboarding.phone');
-    })->name('onboarding.commcare.store');
-
-    Route::get('/phone', function () {
-        return Inertia::render('Onboarding/Phone');
-    })->name('onboarding.phone');
-
-    Route::post('/phone', function () {
-        // TODO: Sauvegarder la config téléphonie
-        return redirect()->route('onboarding.mapping');
-    })->name('onboarding.phone.store');
-
-    Route::get('/mapping', function () {
-        return Inertia::render('Onboarding/Mapping');
-    })->name('onboarding.mapping');
-
-    Route::post('/mapping', function () {
-        // TODO: Sauvegarder les mappings
-        return redirect()->route('onboarding.completion');
-    })->name('onboarding.mapping.store');
-
-    Route::get('/completion', function () {
-        return Inertia::render('Onboarding/Completion');
-    })->name('onboarding.completion');
-
-    // TODO: Ajouter les autres étapes
+Route::middleware(['auth'])->prefix('onboarding')->name('onboarding.')->group(function () {
+    
+    // Étape 1 : Welcome
+    Route::get('/welcome', [OnboardingController::class, 'welcome'])
+        ->name('welcome');
+    
+    // Étape 2 : Company
+    Route::get('/company', [OnboardingController::class, 'company'])
+        ->name('company');
+    Route::post('/company', [OnboardingController::class, 'storeCompany'])
+        ->name('company.store');
+    
+    // Étape 3 : CommCare
+    Route::get('/commcare', [OnboardingController::class, 'commcare'])
+        ->name('commcare');
+    Route::post('/commcare/test', [OnboardingController::class, 'testCommcare'])
+        ->name('commcare.test');
+    Route::post('/commcare', [OnboardingController::class, 'storeCommcare'])
+        ->name('commcare.store');
+    
+    // Étape 4 : Mapping
+    Route::get('/mapping', [OnboardingController::class, 'mapping'])
+        ->name('mapping');
+    Route::post('/mapping/types', [OnboardingController::class, 'fetchCaseTypes'])
+        ->name('mapping.types');
+    Route::post('/mapping/validate', [OnboardingController::class, 'validateCaseType'])
+        ->name('mapping.validate');
+    Route::post('/mapping/properties', [OnboardingController::class, 'fetchCaseProperties'])
+        ->name('mapping.properties');
+    Route::post('/mapping', [OnboardingController::class, 'storeMapping'])
+        ->name('mapping.store');
+    
+    // Étape 5 : Completion
+    Route::get('/completion', [OnboardingController::class, 'completion'])
+        ->name('completion');
 });
 
 // Dashboard with real data

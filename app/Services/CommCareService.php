@@ -1,144 +1,372 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Services;
 
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
-use Carbon\Carbon;
 
 class CommCareService
 {
-    protected $domain;
-    protected $username;
-    protected $password;
-    protected $apiUrl;
-
-    public function __construct()
-    {
-        $this->domain = config('commcare.domain');
-        $this->username = config('commcare.username');
-        $this->password = config('commcare.password');
-        $this->apiUrl = str_replace('{domain}', $this->domain, config('commcare.api_url'));
-    }
+    private string $baseUrl = 'https://www.commcarehq.org';
+    private int $timeout = 30;
 
     /**
-     * Fetch cases from CommCare API
+     * Test la connexion à CommCare
+     * Endpoint utilisé : /a/{project}/api/v0.5/application/
+     * Note : Ce endpoint reste en v0.5 car c'est pour les applications, pas les cases
      * 
-     * @param string|null $lastSyncDate Date of last sync (ISO format)
-     * @param int $limit Number of cases to fetch
-     * @param int $offset Pagination offset
-     * @return array|null
+     * @param string $email Email utilisateur CommCare
+     * @param string $apiKey Clé API CommCare
+     * @param string $projectSpace Nom du projet (domain)
+     * @return array ['success' => bool, 'message' => string, 'data' => array|null]
      */
-    public function fetchCases($lastSyncDate = null, $limit = 100, $offset = 0)
+    public function testConnection(string $email, string $apiKey, string $projectSpace): array
     {
         try {
-            $url = "{$this->apiUrl}/case/";
-            
-            $params = [
-                'type' => config('commcare.case_type'),
-                'limit' => $limit,
-                'offset' => $offset,
-            ];
-
-            // Incremental sync: only fetch cases modified since last sync
-            if ($lastSyncDate) {
-                $params['server_date_modified_start'] = $lastSyncDate;
-            }
-
-            Log::info('CommCare API Request', [
-                'url' => $url,
-                'params' => $params,
+            Log::info('Testing CommCare connection', [
+                'project_space' => $projectSpace,
+                'email' => $email,
             ]);
 
-            $response = Http::withBasicAuth($this->username, $this->password)
-                ->timeout(config('commcare.timeout'))
-                ->get($url, $params);
+            $response = Http::timeout($this->timeout)
+                ->withHeaders([
+                    'Authorization' => "ApiKey {$email}:{$apiKey}",
+                ])
+                ->get("{$this->baseUrl}/a/{$projectSpace}/api/v0.5/application/");
 
             if ($response->successful()) {
                 $data = $response->json();
+                $applicationsCount = count($data['objects'] ?? []);
                 
-                Log::info('CommCare API Response', [
-                    'total_count' => $data['meta']['total_count'] ?? 0,
-                    'limit' => $data['meta']['limit'] ?? 0,
-                    'offset' => $data['meta']['offset'] ?? 0,
+                Log::info('CommCare connection test successful', [
+                    'project_space' => $projectSpace,
+                    'applications_count' => $applicationsCount,
                 ]);
 
-                return $data;
+                return [
+                    'success' => true,
+                    'message' => "Connexion réussie ! {$applicationsCount} application(s) trouvée(s).",
+                    'data' => $data,
+                ];
             }
 
-            Log::error('CommCare API Error', [
+            Log::warning('CommCare connection test failed', [
                 'status' => $response->status(),
-                'body' => $response->body(),
+                'project_space' => $projectSpace,
+                'response_body' => $response->body(),
             ]);
 
-            return null;
+            return [
+                'success' => false,
+                'message' => "Échec de connexion (HTTP {$response->status()}). Vérifiez vos identifiants.",
+                'data' => null,
+            ];
+
+        } catch (\Illuminate\Http\Client\ConnectionException $e) {
+            Log::error('CommCare connection timeout', [
+                'error' => $e->getMessage(),
+                'project_space' => $projectSpace,
+            ]);
+
+            return [
+                'success' => false,
+                'message' => "Délai d'attente dépassé (30s). Vérifiez votre connexion internet.",
+                'data' => null,
+            ];
 
         } catch (\Exception $e) {
-            Log::error('CommCare API Exception', [
-                'message' => $e->getMessage(),
+            Log::error('CommCare connection error', [
+                'error' => $e->getMessage(),
+                'project_space' => $projectSpace,
                 'trace' => $e->getTraceAsString(),
             ]);
 
-            return null;
+            return [
+                'success' => false,
+                'message' => "Erreur : {$e->getMessage()}",
+                'data' => null,
+            ];
         }
     }
 
     /**
-     * Map CommCare case to database fields
+     * Récupère les case types disponibles dans le projet
+     * Endpoint utilisé : /a/{project}/api/case/v1/?closed=false&limit=1000
      * 
-     * @param array $caseData Raw case data from CommCare
-     * @return array Mapped fields for database
+     * LIMITATION : L'API CommCare n'a pas d'endpoint pour lister tous les case types.
+     * Cette méthode récupère un échantillon de cases et extrait les types uniques.
+     * Certains case types rares peuvent ne pas apparaître dans l'échantillon.
+     * 
+     * SOLUTION : Dans l'interface, permettre à l'utilisateur de saisir manuellement
+     * un case type s'il ne le trouve pas dans la liste suggérée.
+     * 
+     * @param string $email
+     * @param string $apiKey
+     * @param string $projectSpace
+     * @param int $sampleSize Nombre de cases à récupérer (1000 par défaut)
+     * @return array Liste des case types uniques trouvés dans l'échantillon
      */
-    public function mapCaseFields($caseData)
+    public function fetchCaseTypes(string $email, string $apiKey, string $projectSpace, int $sampleSize = 1000): array
     {
-                return [
-            'case_id' => $caseData['case_id'] ?? null,
-            'case_name' => $caseData['properties']['case_name'] ?? null,
-            'contact_phone_number' => $this->formatPhone($caseData['properties']['contact_phone_number'] ?? null),
-            'structure_sanitaire' => $caseData['properties']['structure_sanitaire'] ?? null,
-            'district_sanitaire' => $caseData['properties']['district_sanitaire'] ?? null,
-            'region_sanitaire' => $caseData['properties']['region_sanitaire'] ?? null,
-            'next_visit_date' => $this->parseDate($caseData['properties']['next_visit_date'] ?? null),
-            'server_modified_on' => $this->parseDate($caseData['server_date_modified'] ?? null),
-            'updated_at' => now(),
-            'created_at' => now(),
-        ];
-    }
-
-    /**
-     * Format phone number for Côte d'Ivoire
-     */
-    private function formatPhone($phone)
-    {
-        if (!$phone) {
-            return null;
-        }
-
-        // Remove all non-digit characters
-        $phone = preg_replace('/[^0-9]/', '', $phone);
-
-        // Check if valid Ivorian number (10 digits starting with 01, 05, or 07)
-        if (strlen($phone) === 10 && in_array(substr($phone, 0, 2), ['01', '05', '07'])) {
-            return '+225 ' . substr($phone, 0, 2) . ' ' . substr($phone, 2, 2) . ' ' . substr($phone, 4, 2) . ' ' . substr($phone, 6, 2) . ' ' . substr($phone, 8, 2);
-        }
-
-        // Invalid number
-        return null;
-    }
-
-    /**
-     * Parse date from CommCare format
-     */
-    private function parseDate($date)
-    {
-        if (!$date) {
-            return null;
-        }
-
         try {
-            return Carbon::parse($date);
+            Log::info('Fetching case types', [
+                'project_space' => $projectSpace,
+                'sample_size' => $sampleSize,
+            ]);
+
+            // Récupérer un échantillon de cases pour extraire les types
+            $response = Http::timeout($this->timeout)
+                ->withHeaders([
+                    'Authorization' => "ApiKey {$email}:{$apiKey}",
+                ])
+                ->get("{$this->baseUrl}/a/{$projectSpace}/api/case/v1/", [
+                    'closed' => 'false',  // Seulement les cases ouverts
+                    'limit' => $sampleSize, // Taille de l'échantillon
+                ]);
+
+            if ($response->successful()) {
+                $data = $response->json();
+                $cases = $data['objects'] ?? [];
+                
+                // Extraire les case_type uniques
+                // Dans l'API v1, case_type est dans properties.case_type
+                $caseTypes = collect($cases)
+                    ->pluck('properties.case_type')
+                    ->unique()
+                    ->filter()
+                    ->sort()
+                    ->values()
+                    ->toArray();
+
+                Log::info('CommCare case types fetched', [
+                    'project_space' => $projectSpace,
+                    'case_types' => $caseTypes,
+                    'count' => count($caseTypes),
+                    'total_cases_fetched' => count($cases),
+                    'total_cases_in_project' => $data['meta']['total_count'] ?? 'unknown',
+                ]);
+
+                return $caseTypes;
+            }
+
+            Log::warning('Failed to fetch case types', [
+                'status' => $response->status(),
+                'project_space' => $projectSpace,
+                'response_body' => $response->body(),
+            ]);
+
+            return [];
+
         } catch (\Exception $e) {
+            Log::error('Error fetching case types', [
+                'error' => $e->getMessage(),
+                'project_space' => $projectSpace,
+            ]);
+
+            return [];
+        }
+    }
+
+    /**
+     * Vérifie si un case type existe dans le projet
+     * Tente de récupérer au moins 1 case de ce type
+     * 
+     * @param string $email
+     * @param string $apiKey
+     * @param string $projectSpace
+     * @param string $caseType
+     * @return bool True si le case type existe, false sinon
+     */
+    public function validateCaseType(string $email, string $apiKey, string $projectSpace, string $caseType): bool
+    {
+        try {
+            Log::info('Validating case type', [
+                'project_space' => $projectSpace,
+                'case_type' => $caseType,
+            ]);
+
+            $response = Http::timeout($this->timeout)
+                ->withHeaders([
+                    'Authorization' => "ApiKey {$email}:{$apiKey}",
+                ])
+                ->get("{$this->baseUrl}/a/{$projectSpace}/api/case/v1/", [
+                    'closed' => 'false',
+                    'case_type' => $caseType,
+                    'limit' => 1,
+                ]);
+
+            if ($response->successful()) {
+                $data = $response->json();
+                $totalCount = $data['meta']['total_count'] ?? 0;
+                $exists = $totalCount > 0;
+
+                Log::info('Case type validation result', [
+                    'project_space' => $projectSpace,
+                    'case_type' => $caseType,
+                    'exists' => $exists,
+                    'total_count' => $totalCount,
+                ]);
+
+                return $exists;
+            }
+
+            Log::warning('Failed to validate case type', [
+                'status' => $response->status(),
+                'project_space' => $projectSpace,
+                'case_type' => $caseType,
+            ]);
+
+            return false;
+
+        } catch (\Exception $e) {
+            Log::error('Error validating case type', [
+                'error' => $e->getMessage(),
+                'project_space' => $projectSpace,
+                'case_type' => $caseType,
+            ]);
+
+            return false;
+        }
+    }
+
+    /**
+     * Récupère le case le plus récent d'un type donné
+     * Endpoint utilisé : /a/{project}/api/case/v1/?closed=false&case_type={type}&limit=1
+     * 
+     * @param string $email
+     * @param string $apiKey
+     * @param string $projectSpace
+     * @param string $caseType
+     * @return object|null Objet case ou null si aucun trouvé
+     */
+    public function fetchLatestCase(string $email, string $apiKey, string $projectSpace, string $caseType): ?object
+    {
+        try {
+            Log::info('Fetching latest case', [
+                'project_space' => $projectSpace,
+                'case_type' => $caseType,
+            ]);
+
+            $response = Http::timeout($this->timeout)
+                ->withHeaders([
+                    'Authorization' => "ApiKey {$email}:{$apiKey}",
+                ])
+                ->get("{$this->baseUrl}/a/{$projectSpace}/api/case/v1/", [
+                    'closed' => 'false',        // Seulement les cases ouverts
+                    'case_type' => $caseType,   // Filtrer par type
+                    'limit' => 1,               // Un seul case suffit
+                ]);
+
+            if ($response->successful()) {
+                $data = $response->json();
+                $cases = $data['objects'] ?? [];
+
+                if (count($cases) > 0) {
+                    $case = $cases[0];
+                    
+                    Log::info('Latest case fetched', [
+                        'project_space' => $projectSpace,
+                        'case_type' => $caseType,
+                        'case_id' => $case['case_id'] ?? 'unknown',
+                    ]);
+
+                    return (object) $case;
+                }
+
+                Log::warning('No cases found for type', [
+                    'project_space' => $projectSpace,
+                    'case_type' => $caseType,
+                ]);
+            } else {
+                Log::warning('Failed to fetch latest case', [
+                    'status' => $response->status(),
+                    'project_space' => $projectSpace,
+                    'case_type' => $caseType,
+                    'response_body' => $response->body(),
+                ]);
+            }
+
+            return null;
+
+        } catch (\Exception $e) {
+            Log::error('Error fetching latest case', [
+                'error' => $e->getMessage(),
+                'project_space' => $projectSpace,
+                'case_type' => $caseType,
+            ]);
+
             return null;
         }
+    }
+
+    /**
+     * Extrait toutes les propriétés d'un case
+     * Retourne : Case Metadata + Special Case Properties + Custom Properties
+     * 
+     * Structure d'un case CommCare v1 :
+     * - case_id, user_id, date_modified, closed, date_closed (metadata)
+     * - properties: { case_name, case_type, owner_id, external_id, date_opened, ... custom fields }
+     * 
+     * @param object $case Objet case récupéré de l'API
+     * @return array Liste des noms de propriétés (triée alphabétiquement)
+     */
+    public function extractProperties(object $case): array
+    {
+        $properties = [];
+
+        // Case Metadata (au niveau racine du case)
+        $metadata = [
+            'case_id',
+            'user_id',
+            'date_modified',
+            'closed',
+            'date_closed',
+            'domain',
+            'opened_by',
+            'closed_by',
+            'server_date_modified',
+            'server_date_opened',
+        ];
+
+        // Ajouter les metadata qui existent
+        foreach ($metadata as $field) {
+            if (isset($case->$field)) {
+                $properties[] = $field;
+            }
+        }
+
+        // Propriétés du case (dans case->properties)
+        if (isset($case->properties)) {
+            // Convertir l'objet properties en array
+            $propertiesData = json_decode(json_encode($case->properties), true);
+            if (is_array($propertiesData)) {
+                $caseProperties = array_keys($propertiesData);
+                $properties = array_merge($properties, $caseProperties);
+            }
+        }
+
+        // Indices (relations avec d'autres cases)
+        if (isset($case->indices) && is_object($case->indices)) {
+            $indicesData = json_decode(json_encode($case->indices), true);
+            if (is_array($indicesData) && count($indicesData) > 0) {
+                // Ajouter "indices" comme propriété disponible
+                $properties[] = 'indices';
+            }
+        }
+
+        // Supprimer les doublons et trier
+        $properties = array_unique($properties);
+        sort($properties);
+
+        Log::info('Case properties extracted', [
+            'case_id' => $case->case_id ?? 'unknown',
+            'case_type' => $case->properties->case_type ?? 'unknown',
+            'properties_count' => count($properties),
+            'properties' => $properties,
+        ]);
+
+        return $properties;
     }
 }

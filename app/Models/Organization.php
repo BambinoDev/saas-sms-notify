@@ -35,12 +35,16 @@ class Organization extends Model
         'sector',
         'timezone',
         'team_size',
+        'project_description',
         
         // Onboarding - CommCare Config
         'commcare_domain',
+        'commcare_email',
+        'commcare_project_space',
         'commcare_project_name',
         'commcare_api_key',
         'commcare_app_id',
+        'commcare_case_type',
         
         // Onboarding - Phone Validation
         'primary_country',
@@ -49,8 +53,15 @@ class Organization extends Model
         'mobile_only',
         'auto_format_e164',
         
-        // Onboarding - Field Mappings
+        // Onboarding - Field Mappings (old)
         'field_mappings',
+        
+        // Onboarding - Case Properties Mapping (new)
+        'case_properties_mapping',
+        'phone_number_field',
+        'eligibility_field',
+        'eligibility_condition',
+        'eligibility_value',
         
         // Onboarding - Tracking
         'onboarding_completed',
@@ -68,6 +79,7 @@ class Organization extends Model
         'settings' => 'array',
         'allowed_prefixes' => 'array',
         'field_mappings' => 'array',
+        'case_properties_mapping' => 'array',
         'onboarding_completed' => 'boolean',
         'onboarding_completed_at' => 'datetime',
         'mobile_only' => 'boolean',
