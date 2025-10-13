@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Ziggy Route - CommCare Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; }
+        .error { color: red; }
+        .success { color: green; }
+        .info { color: blue; }
+        pre { background: #f5f5f5; padding: 10px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <h1>🔧 Debug Ziggy Route - onboarding.commcare.test</h1>
+
+    <div class="section">
+        <h2>1. Vérification Ziggy disponible</h2>
+        <div id="ziggy-check"></div>
+    </div>
+
+    <div class="section">
+        <h2>2. Vérification route onboarding.commcare.test</h2>
+        <div id="route-check"></div>
+    </div>
+
+    <div class="section">
+        <h2>3. Test de la route</h2>
+        <button onclick="testRoute()">Tester la route</button>
+        <div id="test-result"></div>
+    </div>
+
+    <div class="section">
+        <h2>4. Toutes les routes onboarding</h2>
+        <div id="all-routes"></div>
+    </div>
+
+    <script>
+        // Vérifier si Ziggy est disponible
+        function checkZiggy() {
+            const ziggyCheck = document.getElementById('ziggy-check');
+            
+            if (typeof window.Ziggy !== 'undefined') {
+                ziggyCheck.innerHTML = '<span class="success">✅ Ziggy est disponible</span>';
+                ziggyCheck.innerHTML += '<pre>' + JSON.stringify(window.Ziggy, null, 2) + '</pre>';
+                return true;
+            } else {
+                ziggyCheck.innerHTML = '<span class="error">❌ Ziggy n\'est pas disponible</span>';
+                ziggyCheck.innerHTML += '<p>Vérifiez que le script Ziggy est chargé dans votre page.</p>';
+                return false;
+            }
+        }
+
+        // Vérifier la route spécifique
+        function checkRoute() {
+            const routeCheck = document.getElementById('route-check');
+            
+            if (typeof window.Ziggy !== 'undefined' && window.Ziggy.routes) {
+                if (window.Ziggy.routes['onboarding.commcare.test']) {
+                    routeCheck.innerHTML = '<span class="success">✅ Route onboarding.commcare.test trouvée</span>';
+                    routeCheck.innerHTML += '<pre>' + JSON.stringify(window.Ziggy.routes['onboarding.commcare.test'], null, 2) + '</pre>';
+                    return true;
+                } else {
+                    routeCheck.innerHTML = '<span class="error">❌ Route onboarding.commcare.test NON trouvée</span>';
+                    return false;
+                }
+            } else {
+                routeCheck.innerHTML = '<span class="error">❌ Ziggy.routes non disponible</span>';
+                return false;
+            }
+        }
+
+        // Lister toutes les routes onboarding
+        function listOnboardingRoutes() {
+            const allRoutes = document.getElementById('all-routes');
+            
+            if (typeof window.Ziggy !== 'undefined' && window.Ziggy.routes) {
+                const onboardingRoutes = {};
+                for (const [name, route] of Object.entries(window.Ziggy.routes)) {
+                    if (name.startsWith('onboarding.')) {
+                        onboardingRoutes[name] = route;
+                    }
+                }
+                
+                allRoutes.innerHTML = '<span class="info">Routes onboarding trouvées:</span>';
+                allRoutes.innerHTML += '<pre>' + JSON.stringify(onboardingRoutes, null, 2) + '</pre>';
+            } else {
+                allRoutes.innerHTML = '<span class="error">❌ Impossible de lister les routes</span>';
+            }
+        }
+
+        // Tester la route
+        async function testRoute() {
+            const testResult = document.getElementById('test-result');
+            testResult.innerHTML = '<span class="info">🔄 Test en cours...</span>';
+
+            try {
+                if (typeof window.Ziggy !== 'undefined' && window.Ziggy.routes['onboarding.commcare.test']) {
+                    const routeUrl = window.Ziggy.routes['onboarding.commcare.test'].uri;
+                    const fullUrl = window.Ziggy.url + '/' + routeUrl;
+                    
+                    testResult.innerHTML = '<span class="info">URL testée: ' + fullUrl + '</span>';
+                    
+                    const response = await fetch(fullUrl, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
+                        },
+                        body: JSON.stringify({
+                            email: 'lucas.sidibe@savethechildren.org',
+                            api_key: 'f976f7136f793ff1989aed85529fd673ecddb696',
+                            project_space: 'sci-civ-malaria'
+                        })
+                    });
+
+                    const result = await response.text();
+                    testResult.innerHTML = '<span class="success">✅ Test réussi</span>';
+                    testResult.innerHTML += '<pre>Status: ' + response.status + '</pre>';
+                    testResult.innerHTML += '<pre>Response: ' + result + '</pre>';
+                } else {
+                    testResult.innerHTML = '<span class="error">❌ Route non disponible pour le test</span>';
+                }
+            } catch (error) {
+                testResult.innerHTML = '<span class="error">❌ Erreur lors du test: ' + error.message + '</span>';
+            }
+        }
+
+        // Initialisation
+        document.addEventListener('DOMContentLoaded', function() {
+            checkZiggy();
+            checkRoute();
+            listOnboardingRoutes();
+        });
+    </script>
+</body>
+</html>

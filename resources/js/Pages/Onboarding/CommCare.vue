@@ -2,6 +2,7 @@
 import { ref, computed } from 'vue'
 import { Head, useForm, Link } from '@inertiajs/vue3'
 import axios from 'axios'
+import { route } from 'ziggy-js'
 import OnboardingLayout from '@/Layouts/OnboardingLayout.vue'
 import { CheckCircleIcon, XCircleIcon, ExclamationTriangleIcon } from '@heroicons/vue/24/outline'
 
@@ -23,6 +24,7 @@ const testForm = ref({
 const testStatus = ref(null) // null | 'testing' | 'success' | 'error'
 const testMessage = ref('')
 const testData = ref(null)
+const availableApps = ref([]) // Liste des applications disponibles
 
 // Form pour sauvegarder la configuration (Inertia)
 const form = useForm({
@@ -51,7 +53,7 @@ const testConnection = async () => {
     testData.value = null
 
     try {
-        const response = await axios.post(route('onboarding.commcare.test'), {
+        const response = await axios.post('/onboarding/commcare/test', {
             email: testForm.value.email,
             api_key: testForm.value.api_key,
             project_space: testForm.value.project_space
@@ -67,14 +69,19 @@ const testConnection = async () => {
             form.domain = testForm.value.project_space
             form.api_key = testForm.value.api_key
 
-            // Extraire les infos de l'application si disponible
+            // Stocker toutes les applications disponibles
             if (response.data.data?.objects?.length > 0) {
-                const firstApp = response.data.data.objects[0]
-                if (!form.app_id) {
-                    form.app_id = firstApp.id || ''
-                }
-                if (!form.project_name) {
-                    form.project_name = firstApp.name || ''
+                availableApps.value = response.data.data.objects
+                
+                // Si une seule application, la sélectionner automatiquement
+                if (availableApps.value.length === 1) {
+                    const app = availableApps.value[0]
+                    form.app_id = app.id || ''
+                    form.project_name = app.name || ''
+                } else {
+                    // Si plusieurs applications, ne pas pré-remplir
+                    form.app_id = ''
+                    form.project_name = ''
                 }
             }
         } else {
@@ -93,12 +100,22 @@ const testConnection = async () => {
 }
 
 // Soumission du formulaire
+// Fonction pour sélectionner une application
+const selectApp = (app) => {
+    form.app_id = app.id
+    form.project_name = app.name
+}
+
 const submit = () => {
     if (!isTestSuccessful.value) {
         alert('Veuillez d\'abord tester la connexion avec succès.')
         return
     }
-    form.post(route('onboarding.commcare.store'))
+    if (!form.app_id) {
+        alert('Veuillez sélectionner une application.')
+        return
+    }
+    form.post('/onboarding/commcare')
 }
 </script>
 
@@ -235,8 +252,41 @@ const submit = () => {
                 </h2>
 
                 <form @submit.prevent="submit" class="space-y-6">
-                    <!-- App ID -->
-                    <div>
+                    <!-- Sélection d'application -->
+                    <div v-if="availableApps.length > 0">
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">
+                            Choisir une application <span class="text-red-500">*</span>
+                        </label>
+                        <div class="space-y-3">
+                            <div
+                                v-for="app in availableApps"
+                                :key="app.id"
+                                @click="selectApp(app)"
+                                class="p-4 border-2 rounded-lg cursor-pointer transition-all hover:shadow-md"
+                                :class="{
+                                    'border-blue-500 bg-blue-50': form.app_id === app.id,
+                                    'border-gray-200 hover:border-gray-300': form.app_id !== app.id
+                                }"
+                            >
+                                <div class="flex items-start justify-between">
+                                    <div class="flex-1">
+                                        <h4 class="font-medium text-gray-900 mb-1">{{ app.name }}</h4>
+                                        <p class="text-sm text-gray-600">ID: {{ app.id }}</p>
+                                        <p v-if="app.description" class="text-sm text-gray-500 mt-1">{{ app.description }}</p>
+                                    </div>
+                                    <div v-if="form.app_id === app.id" class="ml-3">
+                                        <CheckCircleIcon class="w-5 h-5 text-blue-600" />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <p v-if="form.errors.app_id" class="mt-1 text-sm text-red-600">
+                            {{ form.errors.app_id }}
+                        </p>
+                    </div>
+
+                    <!-- App ID (champ caché pour les cas où aucune app n'est trouvée) -->
+                    <div v-else>
                         <label class="block text-sm font-semibold text-gray-700 mb-2">
                             Application ID
                         </label>
@@ -284,7 +334,7 @@ const submit = () => {
                     <!-- Actions -->
                     <div class="flex items-center justify-between pt-6 border-t border-gray-200">
                         <Link
-                            :href="route('onboarding.company')"
+                            :href="'/onboarding/company'"
                             class="px-6 py-3 text-gray-700 font-medium hover:text-gray-900 transition-colors"
                         >
                             ← Retour

@@ -1,5 +1,6 @@
 <script setup>
 import { Head, Link } from '@inertiajs/vue3'
+import { route } from 'ziggy-js'
 import { CheckCircleIcon, RocketLaunchIcon } from '@heroicons/vue/24/outline'
 
 const props = defineProps({
@@ -143,7 +144,7 @@ const configSummary = [
                 <!-- CTA -->
                 <div class="text-center">
                     <Link
-                        :href="route('dashboard')"
+                        :href="'/dashboard'"
                         class="inline-flex items-center px-8 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-lg font-semibold rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
                     >
                         <RocketLaunchIcon class="h-6 w-6 mr-2" />

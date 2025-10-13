@@ -307,30 +307,22 @@ class OnboardingController extends Controller
             $apiKey = Crypt::decryptString($organization->commcare_api_key);
             $projectSpace = $organization->commcare_project_space;
 
-            // Fetch le case le plus récent du type demandé
-            $case = $this->commCareService->fetchLatestCase(
+            // Extraire toutes les propriétés possibles en analysant plusieurs cases
+            $properties = $this->commCareService->extractAllProperties(
                 $email,
                 $apiKey,
                 $projectSpace,
                 $validated['case_type']
             );
 
-            if (!$case) {
-                Log::warning('No case found for type', [
-                    'organization_id' => $organization->id,
-                    'case_type' => $validated['case_type'],
-                ]);
-
+            if (empty($properties)) {
                 return response()->json([
                     'success' => false,
                     'message' => "Aucun case trouvé pour le type '{$validated['case_type']}'. Vérifiez que ce type existe dans votre projet CommCare.",
                 ], 404);
             }
 
-            // Extraire les propriétés
-            $properties = $this->commCareService->extractProperties($case);
-
-            Log::info('Case properties fetched', [
+            Log::info('All case properties fetched', [
                 'organization_id' => $organization->id,
                 'case_type' => $validated['case_type'],
                 'properties_count' => count($properties),
@@ -339,7 +331,6 @@ class OnboardingController extends Controller
             return response()->json([
                 'success' => true,
                 'properties' => $properties,
-                'case_example' => $case,
             ]);
 
         } catch (\Exception $e) {

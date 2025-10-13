@@ -2,6 +2,7 @@
 import { ref, computed } from 'vue'
 import { Head, useForm, Link } from '@inertiajs/vue3'
 import axios from 'axios'
+import { route } from 'ziggy-js'
 import OnboardingLayout from '@/Layouts/OnboardingLayout.vue'
 import { CheckCircleIcon, XCircleIcon, InformationCircleIcon } from '@heroicons/vue/24/outline'
 
@@ -60,7 +61,7 @@ const loadProperties = async () => {
     availableProperties.value = []
 
     try {
-        const response = await axios.post(route('onboarding.mapping.properties'), {
+        const response = await axios.post('/onboarding/mapping/properties', {
             case_type: caseTypeInput.value
         })
 
@@ -128,7 +129,7 @@ const submit = () => {
         alert('Veuillez sélectionner au moins une propriété et définir le champ téléphone.')
         return
     }
-    form.post(route('onboarding.mapping.store'))
+    form.post('/onboarding/mapping')
 }
 </script>
 
@@ -351,7 +352,7 @@ const submit = () => {
             <!-- Actions -->
             <div v-if="propertiesLoaded" class="flex items-center justify-between">
                 <Link
-                    :href="route('onboarding.commcare')"
+                    :href="'/onboarding/commcare'"
                     class="px-6 py-3 text-gray-700 font-medium hover:text-gray-900 transition-colors"
                 >
                     ← Retour

@@ -369,4 +369,130 @@ class CommCareService
 
         return $properties;
     }
+
+    /**
+     * Récupère plusieurs cases d'un type spécifique
+     * 
+     * @param string $email Email utilisateur CommCare
+     * @param string $apiKey Clé API CommCare
+     * @param string $projectSpace Nom du projet (domain)
+     * @param string $caseType Type de case à récupérer
+     * @param int $limit Nombre de cases à récupérer (défaut: 10)
+     * @return array Liste des cases
+     */
+    public function fetchMultipleCases(string $email, string $apiKey, string $projectSpace, string $caseType, int $limit = 10): array
+    {
+        try {
+            Log::info('Fetching multiple cases', [
+                'project_space' => $projectSpace,
+                'case_type' => $caseType,
+                'limit' => $limit,
+            ]);
+
+            $response = Http::timeout($this->timeout)
+                ->withHeaders([
+                    'Authorization' => "ApiKey {$email}:{$apiKey}",
+                ])
+                ->get("{$this->baseUrl}/a/{$projectSpace}/api/case/v1/", [
+                    'closed' => 'false',        // Seulement les cases ouverts
+                    'case_type' => $caseType,   // Filtrer par type
+                    'limit' => $limit,           // Nombre de cases
+                ]);
+
+            if ($response->successful()) {
+                $data = $response->json();
+                $cases = $data['objects'] ?? [];
+                
+                Log::info('Multiple cases fetched', [
+                    'project_space' => $projectSpace,
+                    'case_type' => $caseType,
+                    'cases_count' => count($cases),
+                ]);
+
+                return $cases;
+            }
+
+            Log::warning('Failed to fetch multiple cases', [
+                'project_space' => $projectSpace,
+                'case_type' => $caseType,
+                'status' => $response->status(),
+                'response' => $response->body(),
+            ]);
+
+            return [];
+
+        } catch (\Exception $e) {
+            Log::error('Error fetching multiple cases', [
+                'project_space' => $projectSpace,
+                'case_type' => $caseType,
+                'error' => $e->getMessage(),
+            ]);
+
+            return [];
+        }
+    }
+
+    /**
+     * Extrait toutes les propriétés possibles d'un type de case
+     * en analysant plusieurs cases pour avoir une vue complète
+     * 
+     * @param string $email Email utilisateur CommCare
+     * @param string $apiKey Clé API CommCare
+     * @param string $projectSpace Nom du projet (domain)
+     * @param string $caseType Type de case à analyser
+     * @return array Liste complète des noms de propriétés (triée alphabétiquement)
+     */
+    public function extractAllProperties(string $email, string $apiKey, string $projectSpace, string $caseType): array
+    {
+        $allProperties = [];
+
+        try {
+            // Récupérer plusieurs cases (limite à 10 pour éviter les timeouts)
+            $cases = $this->fetchMultipleCases($email, $apiKey, $projectSpace, $caseType, 10);
+
+            if (empty($cases)) {
+                Log::warning('No cases found for property extraction', [
+                    'case_type' => $caseType,
+                    'project_space' => $projectSpace,
+                ]);
+                return [];
+            }
+
+            // Analyser chaque case pour extraire toutes les propriétés possibles
+            foreach ($cases as $caseData) {
+                // Convertir l'array en objet pour extractProperties()
+                $case = (object) $caseData;
+                $caseProperties = $this->extractProperties($case);
+                $allProperties = array_merge($allProperties, $caseProperties);
+            }
+
+            // Supprimer les doublons et trier
+            $allProperties = array_unique($allProperties);
+            sort($allProperties);
+
+            Log::info('All case properties extracted', [
+                'case_type' => $caseType,
+                'cases_analyzed' => count($cases),
+                'total_properties_count' => count($allProperties),
+                'properties' => $allProperties,
+            ]);
+
+            return $allProperties;
+
+        } catch (\Exception $e) {
+            Log::error('Error extracting all properties', [
+                'case_type' => $caseType,
+                'project_space' => $projectSpace,
+                'error' => $e->getMessage(),
+            ]);
+
+            // Fallback : retourner les propriétés du premier case trouvé
+            $firstCase = $this->fetchLatestCase($email, $apiKey, $projectSpace, $caseType);
+            if ($firstCase) {
+                return $this->extractProperties($firstCase);
+            }
+
+            return [];
+        }
+    }
 }

@@ -1,6 +1,7 @@
 <script setup>
 import { ref } from 'vue'
 import { Head, useForm, Link } from '@inertiajs/vue3'
+import { route } from 'ziggy-js'
 import OnboardingLayout from '@/Layouts/OnboardingLayout.vue'
 
 const props = defineProps({
@@ -54,7 +55,7 @@ const teamSizes = [
 ]
 
 const submit = () => {
-    form.post(route('onboarding.company.store'))
+    form.post('/onboarding/company')
 }
 </script>
 
@@ -184,7 +185,7 @@ const submit = () => {
                 <!-- Actions -->
                 <div class="flex items-center justify-between pt-6 border-t border-gray-200">
                     <Link
-                        :href="route('onboarding.welcome')"
+                        :href="'/onboarding/welcome'"
                         class="px-6 py-3 text-gray-700 font-medium hover:text-gray-900 transition-colors"
                     >
                         ← Retour
