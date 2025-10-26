@@ -35,12 +35,36 @@ class HandleInertiaRequests extends Middleware
      */
     public function share(Request $request): array
     {
-        return [
-            ...parent::share($request),
+        return array_merge(parent::share($request), [
+            // Flash messages (lazy)
             'flash' => [
-                'success' => $request->session()->get('success'),
-                'error' => $request->session()->get('error'),
+                'success' => fn () => $request->session()->get('success'),
+                'error' => fn () => $request->session()->get('error'),
+                'warning' => fn () => $request->session()->get('warning'),
+                'info' => fn () => $request->session()->get('info'),
             ],
-        ];
+
+            // Authenticated user with organization (lazy)
+            'auth' => [
+                'user' => fn () => $request->user() ? [
+                    'id' => $request->user()->id,
+                    'name' => $request->user()->name,
+                    'email' => $request->user()->email,
+                    'email_verified_at' => $request->user()->email_verified_at,
+                    'created_at' => $request->user()->created_at,
+                    'organization' => $request->user()->organization ? [
+                        'id' => $request->user()->organization->id,
+                        'name' => $request->user()->organization->name,
+                        'slug' => $request->user()->organization->slug ?? null,
+                        'status' => $request->user()->organization->status ?? null,
+                    ] : null,
+                ] : null,
+            ],
+
+            // Router context for client-side (Ziggy JS handles routes client-side)
+            'ziggy' => fn () => [
+                'location' => $request->url(),
+            ],
+        ]);
     }
 }

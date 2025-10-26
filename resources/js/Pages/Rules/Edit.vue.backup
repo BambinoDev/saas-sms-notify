@@ -1,0 +1,907 @@
+<script setup>
+import { ref, computed } from 'vue';
+import { Head, useForm, Link } from '@inertiajs/vue3'
+import AppLayout from '@/Layouts/AppLayout.vue'
+import { ArrowLeftIcon } from '@heroicons/vue/24/outline'
+
+const props = defineProps({
+    rule: Object,
+    templates: Array,
+    availableFields: Object,
+})
+
+// État pour la recherche et l'affichage
+const searchQuery = ref('');
+const compactView = ref(true);
+const expandedCategories = ref({
+  dates: true,
+  identifiers: false,
+  location: false,
+  medical: false,
+  contact: false,
+  other: false
+});
+
+const form = useForm({
+    name: props.rule.name,
+    description: props.rule.description,
+    sms_template_id: props.rule.sms_template_id,
+    trigger_field: props.rule.trigger_field,
+    trigger_condition: props.rule.trigger_condition,
+    trigger_value: props.rule.trigger_value,
+    trigger_unit: props.rule.trigger_unit,
+    send_time: props.rule.send_time || '',
+    is_active: props.rule.is_active,
+    // NOUVEAUX CHAMPS REQUIS
+    generation_frequency: props.rule.generation_frequency || 'daily',
+    generation_time: props.rule.generation_time || '01:00',
+    generation_day_of_week: props.rule.generation_day_of_week || 1,
+    generation_day_of_month: props.rule.generation_day_of_month || 1,
+    priority: props.rule.priority || 5,
+    daily_limit: props.rule.daily_limit || '',
+})
+
+// Transformer availableFields en options d'affichage
+const fieldOptions = computed(() => {
+  if (!props.availableFields || Object.keys(props.availableFields).length === 0) {
+    return [
+      {
+        value: 'next_visit_date',
+        label: 'Date du prochain rendez-vous',
+        icon: '📅',
+        description: 'Champ par défaut pour les rappels de RDV',
+        example: 'Rappeler 2 jours avant un RDV',
+        type: 'date'
+      }
+    ];
+  }
+
+  return Object.entries(props.availableFields).map(([fieldKey, fieldLabel]) => {
+    let icon = '📋';
+    let description = `Surveiller le champ "${fieldLabel}"`;
+    let example = `Envoyer un SMS basé sur ${fieldLabel}`;
+    let type = 'text';
+
+    if (fieldKey.includes('date') || fieldKey.includes('_at')) {
+      icon = '📅';
+      type = 'date';
+      description = `Surveiller la date : ${fieldLabel}`;
+      example = `Ex: Rappel 2 jours avant ${fieldLabel}`;
+    }
+    else if (fieldKey.includes('created') || fieldKey.includes('inscription')) {
+      icon = '🆕';
+      type = 'date';
+      description = `Date de création ou inscription : ${fieldLabel}`;
+      example = `Ex: Message 1 jour après ${fieldLabel}`;
+    }
+    else if (fieldKey.includes('updated') || fieldKey.includes('modified')) {
+      icon = '🔄';
+      type = 'date';
+      description = `Date de dernière modification : ${fieldLabel}`;
+      example = `Ex: Relance après 30 jours sans ${fieldLabel}`;
+    }
+    else if (fieldKey.includes('rdv') || fieldKey.includes('visite') || fieldKey.includes('cpn') || fieldKey.includes('consultation')) {
+      icon = '🏥';
+      type = 'date';
+      description = `Date de rendez-vous : ${fieldLabel}`;
+      example = `Ex: Rappel avant ${fieldLabel}`;
+    }
+    else if (fieldKey.includes('vaccin') || fieldKey.includes('immunisation')) {
+      icon = '💉';
+      type = 'date';
+      description = `Date de vaccination : ${fieldLabel}`;
+      example = `Ex: Rappel de vaccination ${fieldLabel}`;
+    }
+    else if (fieldKey.includes('accouchement') || fieldKey.includes('delivery')) {
+      icon = '👶';
+      type = 'date';
+      description = `Date d'accouchement : ${fieldLabel}`;
+      example = `Ex: Suivi post-accouchement ${fieldLabel}`;
+    }
+    else if (fieldKey.includes('district') || fieldKey.includes('region') || fieldKey.includes('commune') || 
+             fieldKey.includes('structure') || fieldKey.includes('site') || fieldKey.includes('lieu')) {
+      icon = '📍';
+    }
+    else if (fieldKey.includes('phone') || fieldKey.includes('telephone') || fieldKey.includes('contact') || 
+             fieldKey.includes('email')) {
+      icon = '📞';
+    }
+    else if (fieldKey.includes('id') || fieldKey.includes('code') || fieldKey.includes('number') || 
+             fieldKey.includes('case_')) {
+      icon = '🆔';
+    }
+
+    return {
+      value: fieldKey,
+      label: fieldLabel,
+      icon: icon,
+      description: description,
+      example: example,
+      type: type
+    };
+  });
+});
+
+// Catégoriser les champs
+const categorizedFields = computed(() => {
+  const categories = {
+    dates: { label: '📅 Dates et rendez-vous', icon: '📅', fields: [] },
+    identifiers: { label: '🆔 Identifiants', icon: '🆔', fields: [] },
+    location: { label: '📍 Localisation', icon: '📍', fields: [] },
+    medical: { label: '🏥 Informations médicales', icon: '🏥', fields: [] },
+    contact: { label: '📞 Contact', icon: '📞', fields: [] },
+    other: { label: '📋 Autres', icon: '📋', fields: [] }
+  };
+
+  fieldOptions.value.forEach(field => {
+    const key = field.value.toLowerCase();
+    
+    if (key.includes('date') || key.includes('_at') || key.includes('rdv') || 
+        key.includes('visite') || key.includes('cpn') || key.includes('vaccin')) {
+      categories.dates.fields.push(field);
+    }
+    else if (key.includes('id') || key.includes('code') || key.includes('number') || 
+             key.includes('case_')) {
+      categories.identifiers.fields.push(field);
+    }
+    else if (key.includes('district') || key.includes('region') || key.includes('commune') || 
+             key.includes('structure') || key.includes('site') || key.includes('lieu')) {
+      categories.location.fields.push(field);
+    }
+    else if (key.includes('age') || key.includes('poids') || key.includes('taille') || 
+             key.includes('tension') || key.includes('medical') || key.includes('diagnostic')) {
+      categories.medical.fields.push(field);
+    }
+    else if (key.includes('phone') || key.includes('telephone') || key.includes('contact') || 
+             key.includes('email')) {
+      categories.contact.fields.push(field);
+    }
+    else {
+      categories.other.fields.push(field);
+    }
+  });
+
+  return Object.entries(categories)
+    .filter(([_, cat]) => cat.fields.length > 0)
+    .reduce((acc, [key, cat]) => {
+      acc[key] = cat;
+      return acc;
+    }, {});
+});
+
+// Filtrer selon la recherche
+const filteredCategories = computed(() => {
+  if (!searchQuery.value) {
+    return categorizedFields.value;
+  }
+
+  const query = searchQuery.value.toLowerCase();
+  const filtered = {};
+
+  Object.entries(categorizedFields.value).forEach(([key, category]) => {
+    const matchingFields = category.fields.filter(field => 
+      field.label.toLowerCase().includes(query) ||
+      field.value.toLowerCase().includes(query) ||
+      field.description.toLowerCase().includes(query)
+    );
+
+    if (matchingFields.length > 0) {
+      filtered[key] = {
+        ...category,
+        fields: matchingFields
+      };
+    }
+  });
+
+  return filtered;
+});
+
+// Compter le total de champs filtrés
+const totalFilteredFields = computed(() => {
+  return Object.values(filteredCategories.value)
+    .reduce((sum, cat) => sum + cat.fields.length, 0);
+});
+
+// Prévisualisation dynamique de la règle
+const rulePreview = computed(() => {
+  if (!form.trigger_field || !form.trigger_condition) {
+    return "⚠️ Configurez les paramètres ci-dessous pour voir votre règle";
+  }
+
+  const fieldLabels = {
+    'next_visit_date': 'la date du prochain RDV',
+    'created_at': 'la création du dossier',
+    'updated_at': 'la dernière modification',
+  };
+
+  const field = props.availableFields?.[form.trigger_field] || fieldLabels[form.trigger_field] || form.trigger_field;
+
+  const conditionLabels = {
+    'before': 'AVANT',
+    'equals': 'LE JOUR MÊME DE',
+    'after': 'APRÈS',
+  };
+
+  const condition = conditionLabels[form.trigger_condition] || form.trigger_condition;
+  const value = form.trigger_value || 0;
+  const unit = form.trigger_unit === 'days' ? 'jour(s)' : 'heure(s)';
+
+  if (form.trigger_condition === 'equals' && value === 0) {
+    return `📌 Envoyer un SMS ${condition} ${field}`;
+  }
+
+  return `📌 Envoyer un SMS ${value} ${unit} ${condition} ${field}`;
+});
+
+const updatePreview = () => {
+  // Force recompute
+};
+
+const submit = () => {
+    // S'assurer que les champs conditionnels ont des valeurs par défaut
+    if (form.generation_frequency === 'weekly' && !form.generation_day_of_week) {
+        form.generation_day_of_week = 1; // Lundi par défaut
+    }
+    if (form.generation_frequency === 'monthly' && !form.generation_day_of_month) {
+        form.generation_day_of_month = 1; // 1er du mois par défaut
+    }
+    
+    form.put(`/rules/${props.rule.id}`)
+}
+
+const getTriggerDescription = () => {
+    if (!form.trigger_field || !form.trigger_condition || !form.trigger_value) {
+        return 'Sélectionnez les conditions...'
+    }
+    
+    const fieldName = props.availableFields[form.trigger_field] || form.trigger_field
+    const condition = form.trigger_condition
+    const value = form.trigger_value
+    const unit = form.trigger_unit
+    
+    switch (condition) {
+        case 'before':
+            return `${value} ${unit} avant ${fieldName}`
+        case 'after':
+            return `${value} ${unit} après ${fieldName}`
+        case 'equals':
+            return `Quand ${fieldName} = ${value}`
+        case 'between':
+            return `Entre ${value} ${unit}`
+        default:
+            return 'Condition non définie'
+    }
+}
+</script>
+
+<template>
+    <AppLayout>
+        <Head title="Modifier Règle SMS" />
+
+        <div class="py-12">
+            <div class="max-w-4xl mx-auto sm:px-6 lg:px-8">
+                <!-- Header -->
+                <div class="flex items-center mb-8">
+                    <Link
+                        href="/rules"
+                        class="mr-4 p-2 text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                    >
+                        <ArrowLeftIcon class="h-5 w-5" />
+                    </Link>
+                    <div>
+                        <h1 class="text-3xl font-bold text-gray-900 dark:text-white">
+                            Modifier Règle SMS
+                        </h1>
+                        <p class="mt-2 text-gray-600 dark:text-gray-400">
+                            Modifiez la règle "{{ rule.name }}"
+                        </p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <!-- Formulaire -->
+                    <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+                        <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-6">
+                            Configuration de la règle
+                        </h2>
+
+                        <form @submit.prevent="submit" class="space-y-6">
+                            <!-- Nom -->
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                                    Nom de la règle <span class="text-red-500">*</span>
+                                </label>
+                                <input
+                                    v-model="form.name"
+                                    type="text"
+                                    required
+                                    class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                                    placeholder="Ex: Rappel RDV J-1"
+                                />
+                                <div v-if="form.errors.name" class="mt-1 text-sm text-red-600">
+                                    {{ form.errors.name }}
+                                </div>
+                            </div>
+
+                            <!-- Description -->
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                                    Description (optionnelle)
+                                </label>
+                                <textarea
+                                    v-model="form.description"
+                                    rows="2"
+                                    class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                                    placeholder="Description de cette règle..."
+                                ></textarea>
+                                <div v-if="form.errors.description" class="mt-1 text-sm text-red-600">
+                                    {{ form.errors.description }}
+                                </div>
+                            </div>
+
+                            <!-- Template -->
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                                    Template SMS <span class="text-red-500">*</span>
+                                </label>
+                                <select
+                                    v-model="form.sms_template_id"
+                                    required
+                                    class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                                >
+                                    <option value="">Sélectionnez un template...</option>
+                                    <option
+                                        v-for="template in templates"
+                                        :key="template.id"
+                                        :value="template.id"
+                                    >
+                                        {{ template.name }}
+                                    </option>
+                                </select>
+                                <div v-if="form.errors.sms_template_id" class="mt-1 text-sm text-red-600">
+                                    {{ form.errors.sms_template_id }}
+                                </div>
+                            </div>
+
+                            <!-- Question 1 : Champ - VERSION MODERNE -->
+                            <div class="mb-8">
+                                <!-- Header -->
+                                <div class="mb-4 p-4 bg-gradient-to-r from-blue-600 to-blue-500 rounded-lg shadow-md">
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-8 h-8 bg-white text-blue-600 rounded-full flex items-center justify-center font-bold text-lg">
+                                            A
+                                        </div>
+                                        <div class="flex-1">
+                                            <h3 class="text-lg font-bold text-white">
+                                                Choisissez le champ de date à surveiller
+                                            </h3>
+                                            <p class="text-sm text-blue-100 mt-1">
+                                                Sélectionnez le champ qui déclenchera l'envoi du SMS
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Barre de recherche + Options d'affichage -->
+                                <div class="mb-4 flex gap-3">
+                                    <!-- Recherche -->
+                                    <div class="flex-1 relative">
+                                        <input
+                                            v-model="searchQuery"
+                                            type="text"
+                                            placeholder="🔍 Rechercher un champ..."
+                                            class="w-full pl-10 pr-4 py-2.5 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                                        />
+                                        <svg class="absolute left-3 top-3 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                        </svg>
+                                    </div>
+
+                                    <!-- Toggle vue compacte -->
+                                    <button
+                                        @click="compactView = !compactView"
+                                        type="button"
+                                        class="px-4 py-2.5 border-2 border-gray-300 rounded-lg hover:bg-gray-50 transition flex items-center gap-2 text-sm font-medium text-gray-700"
+                                    >
+                                        <svg v-if="compactView" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                                        </svg>
+                                        <svg v-else class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+                                        </svg>
+                                        {{ compactView ? 'Vue détaillée' : 'Vue compacte' }}
+                                    </button>
+                                </div>
+
+                                <!-- Compteur de résultats -->
+                                <div v-if="searchQuery" class="mb-3 text-sm text-gray-600">
+                                    {{ totalFilteredFields }} champ(s) trouvé(s)
+                                </div>
+
+                                <!-- Liste des catégories -->
+                                <div class="space-y-4">
+                                    <div
+                                        v-for="(category, categoryKey) in filteredCategories"
+                                        :key="categoryKey"
+                                        class="border-2 border-gray-200 rounded-lg overflow-hidden"
+                                    >
+                                        <!-- Header catégorie (cliquable pour expand/collapse) -->
+                                        <button
+                                            @click="expandedCategories[categoryKey] = !expandedCategories[categoryKey]"
+                                            type="button"
+                                            class="w-full px-4 py-3 bg-gray-50 hover:bg-gray-100 flex items-center justify-between transition"
+                                        >
+                                            <div class="flex items-center gap-3">
+                                                <span class="text-2xl">{{ category.icon }}</span>
+                                                <span class="font-semibold text-gray-900">{{ category.label }}</span>
+                                                <span class="text-sm text-gray-500">({{ category.fields.length }})</span>
+                                            </div>
+                                            <svg
+                                                class="w-5 h-5 text-gray-500 transition-transform"
+                                                :class="{ 'rotate-180': expandedCategories[categoryKey] }"
+                                                fill="none"
+                                                stroke="currentColor"
+                                                viewBox="0 0 24 24"
+                                            >
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                                            </svg>
+                                        </button>
+
+                                        <!-- Champs de la catégorie -->
+                                        <div
+                                            v-show="expandedCategories[categoryKey]"
+                                            class="p-3 space-y-2"
+                                        >
+                                            <!-- Vue COMPACTE -->
+                                            <div v-if="compactView" class="space-y-1.5">
+                                                <label
+                                                    v-for="field in category.fields"
+                                                    :key="field.value"
+                                                    class="flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-all hover:bg-blue-50"
+                                                    :class="{
+                                                        'bg-blue-100 border-2 border-blue-500': form.trigger_field === field.value,
+                                                        'border-2 border-transparent': form.trigger_field !== field.value
+                                                    }"
+                                                >
+                                                    <input
+                                                        type="radio"
+                                                        v-model="form.trigger_field"
+                                                        :value="field.value"
+                                                        class="w-5 h-5 text-blue-600"
+                                                        @change="updatePreview"
+                                                    />
+                                                    <span class="text-xl">{{ field.icon }}</span>
+                                                    <span class="flex-1 font-medium text-gray-900">{{ field.label }}</span>
+                                                    <svg
+                                                        v-if="form.trigger_field === field.value"
+                                                        class="w-5 h-5 text-blue-600"
+                                                        fill="none"
+                                                        stroke="currentColor"
+                                                        viewBox="0 0 24 24"
+                                                    >
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
+                                                    </svg>
+                                                </label>
+                                            </div>
+
+                                            <!-- Vue DÉTAILLÉE -->
+                                            <div v-else class="space-y-3">
+                                                <label
+                                                    v-for="field in category.fields"
+                                                    :key="field.value"
+                                                    class="block cursor-pointer"
+                                                >
+                                                    <div
+                                                        class="relative p-4 border-3 rounded-xl transition-all"
+                                                        :class="{
+                                                            'border-blue-600 bg-blue-50 shadow-lg': form.trigger_field === field.value,
+                                                            'border-gray-300 bg-white hover:border-blue-400 hover:bg-blue-50': form.trigger_field !== field.value
+                                                        }"
+                                                    >
+                                                        <div class="flex items-start gap-4">
+                                                            <input
+                                                                type="radio"
+                                                                v-model="form.trigger_field"
+                                                                :value="field.value"
+                                                                class="mt-1 w-5 h-5 text-blue-600"
+                                                                @change="updatePreview"
+                                                            />
+                                                            <div class="flex-shrink-0">
+                                                                <div 
+                                                                    class="w-12 h-12 rounded-lg flex items-center justify-center text-2xl"
+                                                                    :class="{
+                                                                        'bg-blue-600': form.trigger_field === field.value,
+                                                                        'bg-gray-200': form.trigger_field !== field.value
+                                                                    }"
+                                                                >
+                                                                    <span v-if="form.trigger_field === field.value" class="filter brightness-0 invert">
+                                                                        {{ field.icon }}
+                                                                    </span>
+                                                                    <span v-else>{{ field.icon }}</span>
+                                                                </div>
+                                                            </div>
+                                                            <div class="flex-1">
+                                                                <h4 
+                                                                    class="text-base font-bold mb-1"
+                                                                    :class="{
+                                                                        'text-blue-900': form.trigger_field === field.value,
+                                                                        'text-gray-900': form.trigger_field !== field.value
+                                                                    }"
+                                                                >
+                                                                    {{ field.label }}
+                                                                </h4>
+                                                                <p class="text-sm text-gray-600">{{ field.description }}</p>
+                                                                <p class="text-xs text-blue-600 mt-1">{{ field.example }}</p>
+                                                            </div>
+                                                            <svg
+                                                                v-if="form.trigger_field === field.value"
+                                                                class="w-6 h-6 text-blue-600 flex-shrink-0"
+                                                                fill="none"
+                                                                stroke="currentColor"
+                                                                viewBox="0 0 24 24"
+                                                            >
+                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
+                                                            </svg>
+                                                        </div>
+                                                    </div>
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Message si aucun résultat -->
+                                <div
+                                    v-if="searchQuery && totalFilteredFields === 0"
+                                    class="text-center py-8 text-gray-500"
+                                >
+                                    <svg class="w-12 h-12 mx-auto mb-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                    <p class="font-medium">Aucun champ trouvé pour "{{ searchQuery }}"</p>
+                                    <button
+                                        @click="searchQuery = ''"
+                                        type="button"
+                                        class="mt-2 text-blue-600 hover:text-blue-700 text-sm font-medium"
+                                    >
+                                        Réinitialiser la recherche
+                                    </button>
+                                </div>
+
+                                <!-- Message d'aide -->
+                                <div class="mt-4 p-4 bg-yellow-50 border-2 border-yellow-300 rounded-lg">
+                                    <div class="flex items-start gap-3">
+                                        <svg class="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                        </svg>
+                                        <div>
+                                            <p class="text-sm font-semibold text-yellow-900">
+                                                💡 Astuce
+                                            </p>
+                                            <p class="text-sm text-yellow-800 mt-1">
+                                                Utilisez la <strong>barre de recherche</strong> pour trouver rapidement un champ.
+                                                Les champs sont organisés par catégorie pour faciliter votre choix.
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Prévisualisation de la règle -->
+                            <div class="mt-4 p-4 bg-white border-2 border-blue-400 rounded-lg shadow-sm">
+                                <div class="flex items-start gap-3">
+                                    <svg class="w-6 h-6 text-blue-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                    <div class="flex-1">
+                                        <p class="text-xs font-medium text-gray-600 uppercase tracking-wide mb-1">
+                                            Aperçu de votre règle en langage clair :
+                                        </p>
+                                        <p class="text-base font-semibold text-blue-900">
+                                            {{ rulePreview }}
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div v-if="form.errors.trigger_field" class="mt-1 text-sm text-red-600">
+                                {{ form.errors.trigger_field }}
+                            </div>
+                        </div>
+
+                        <!-- Condition -->
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                                    Condition <span class="text-red-500">*</span>
+                                </label>
+                                <select
+                                    v-model="form.trigger_condition"
+                                    required
+                                    class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                                >
+                                    <option value="before">Avant</option>
+                                    <option value="after">Après</option>
+                                    <option value="equals">Égal à</option>
+                                    <option value="between">Entre</option>
+                                </select>
+                                <div v-if="form.errors.trigger_condition" class="mt-1 text-sm text-red-600">
+                                    {{ form.errors.trigger_condition }}
+                                </div>
+                            </div>
+
+                            <!-- Valeur -->
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                                    Valeur <span class="text-red-500">*</span>
+                                </label>
+                                <input
+                                    v-model="form.trigger_value"
+                                    type="text"
+                                    required
+                                    class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                                    placeholder="Ex: 1, 2, demain, aujourd'hui..."
+                                />
+                                <div v-if="form.errors.trigger_value" class="mt-1 text-sm text-red-600">
+                                    {{ form.errors.trigger_value }}
+                                </div>
+                            </div>
+
+                            <!-- Unité -->
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                                    Unité <span class="text-red-500">*</span>
+                                </label>
+                                <select
+                                    v-model="form.trigger_unit"
+                                    required
+                                    class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                                >
+                                    <option value="minutes">Minutes</option>
+                                    <option value="hours">Heures</option>
+                                    <option value="days">Jours</option>
+                                    <option value="weeks">Semaines</option>
+                                </select>
+                                <div v-if="form.errors.trigger_unit" class="mt-1 text-sm text-red-600">
+                                    {{ form.errors.trigger_unit }}
+                                </div>
+                            </div>
+
+                            <!-- Heure d'envoi -->
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                                    Heure d'envoi (optionnel)
+                                </label>
+                                <input
+                                    v-model="form.send_time"
+                                    type="time"
+                                    class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                                />
+                                <div class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                                    Si non spécifié, l'envoi se fait immédiatement
+                                </div>
+                                <div v-if="form.errors.send_time" class="mt-1 text-sm text-red-600">
+                                    {{ form.errors.send_time }}
+                                </div>
+                            </div>
+
+                            <!-- Fréquence de génération -->
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                                    Fréquence de génération <span class="text-red-500">*</span>
+                                </label>
+                                <select
+                                    v-model="form.generation_frequency"
+                                    required
+                                    class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                                >
+                                    <option value="daily">Quotidien</option>
+                                    <option value="weekly">Hebdomadaire</option>
+                                    <option value="monthly">Mensuel</option>
+                                </select>
+                                <div v-if="form.errors.generation_frequency" class="mt-1 text-sm text-red-600">
+                                    {{ form.errors.generation_frequency }}
+                                </div>
+                            </div>
+
+                            <!-- Heure de génération -->
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                                    Heure de génération <span class="text-red-500">*</span>
+                                </label>
+                                <input
+                                    v-model="form.generation_time"
+                                    type="time"
+                                    required
+                                    class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                                />
+                                <div class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                                    Heure à laquelle la génération automatique se déclenche
+                                </div>
+                                <div v-if="form.errors.generation_time" class="mt-1 text-sm text-red-600">
+                                    {{ form.errors.generation_time }}
+                                </div>
+                            </div>
+
+                            <!-- Jour de la semaine (si hebdomadaire) -->
+                            <div v-if="form.generation_frequency === 'weekly'">
+                                <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                                    Jour de la semaine <span class="text-red-500">*</span>
+                                </label>
+                                <select
+                                    v-model="form.generation_day_of_week"
+                                    required
+                                    class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                                >
+                                    <option value="0">Dimanche</option>
+                                    <option value="1">Lundi</option>
+                                    <option value="2">Mardi</option>
+                                    <option value="3">Mercredi</option>
+                                    <option value="4">Jeudi</option>
+                                    <option value="5">Vendredi</option>
+                                    <option value="6">Samedi</option>
+                                </select>
+                                <div v-if="form.errors.generation_day_of_week" class="mt-1 text-sm text-red-600">
+                                    {{ form.errors.generation_day_of_week }}
+                                </div>
+                            </div>
+
+                            <!-- Jour du mois (si mensuel) -->
+                            <div v-if="form.generation_frequency === 'monthly'">
+                                <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                                    Jour du mois <span class="text-red-500">*</span>
+                                </label>
+                                <select
+                                    v-model="form.generation_day_of_month"
+                                    required
+                                    class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                                >
+                                    <option v-for="day in 31" :key="day" :value="day">{{ day }}</option>
+                                </select>
+                                <div v-if="form.errors.generation_day_of_month" class="mt-1 text-sm text-red-600">
+                                    {{ form.errors.generation_day_of_month }}
+                                </div>
+                            </div>
+
+                            <!-- Priorité -->
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                                    Priorité
+                                </label>
+                                <select
+                                    v-model="form.priority"
+                                    class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                                >
+                                    <option value="0">Urgent (0)</option>
+                                    <option value="1">Très haute (1)</option>
+                                    <option value="2">Haute (2)</option>
+                                    <option value="3">Élevée (3)</option>
+                                    <option value="4">Moyenne-haute (4)</option>
+                                    <option value="5">Moyenne (5)</option>
+                                    <option value="6">Moyenne-basse (6)</option>
+                                    <option value="7">Basse (7)</option>
+                                    <option value="8">Très basse (8)</option>
+                                    <option value="9">Faible (9)</option>
+                                    <option value="10">Très faible (10)</option>
+                                </select>
+                                <div class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                                    Ordre d'exécution des règles (0 = priorité maximale)
+                                </div>
+                                <div v-if="form.errors.priority" class="mt-1 text-sm text-red-600">
+                                    {{ form.errors.priority }}
+                                </div>
+                            </div>
+
+                            <!-- Limite quotidienne -->
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                                    Limite quotidienne (optionnel)
+                                </label>
+                                <input
+                                    v-model="form.daily_limit"
+                                    type="number"
+                                    min="1"
+                                    class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                                    placeholder="Ex: 100"
+                                />
+                                <div class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                                    Nombre maximum de SMS générés par jour (laisser vide = illimité)
+                                </div>
+                                <div v-if="form.errors.daily_limit" class="mt-1 text-sm text-red-600">
+                                    {{ form.errors.daily_limit }}
+                                </div>
+                            </div>
+
+                            <!-- Statut actif -->
+                            <div class="flex items-center">
+                                <input
+                                    v-model="form.is_active"
+                                    type="checkbox"
+                                    class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                                />
+                                <label class="ml-2 text-sm text-gray-700 dark:text-gray-300">
+                                    Règle active
+                                </label>
+                            </div>
+
+                            <!-- Boutons -->
+                            <div class="flex space-x-4">
+                                <button
+                                    type="submit"
+                                    :disabled="form.processing"
+                                    class="px-6 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
+                                >
+                                    {{ form.processing ? 'Mise à jour...' : 'Mettre à jour la règle' }}
+                                </button>
+                                <Link
+                                    href="/rules"
+                                    class="px-6 py-2 bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-300 font-semibold rounded-lg hover:bg-gray-400 dark:hover:bg-gray-500 transition-colors"
+                                >
+                                    Annuler
+                                </Link>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Aide et prévisualisation -->
+                    <div class="space-y-6">
+                        <!-- Champs disponibles -->
+                        <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+                            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                                Champs disponibles
+                            </h3>
+                            <div class="space-y-2">
+                                <div
+                                    v-for="(label, field) in availableFields"
+                                    :key="field"
+                                    class="p-2 bg-gray-50 dark:bg-gray-700 rounded"
+                                >
+                                    <div class="text-sm font-medium text-gray-900 dark:text-white">
+                                        {{ label }}
+                                    </div>
+                                    <div class="text-xs text-gray-500 dark:text-gray-400">
+                                        {{ field }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Prévisualisation de la condition -->
+                        <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+                            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                                Prévisualisation
+                            </h3>
+                            <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
+                                <div class="text-sm text-gray-700 dark:text-gray-300">
+                                    <strong>Condition :</strong> {{ getTriggerDescription() }}
+                                </div>
+                                <div v-if="form.send_time" class="mt-2 text-sm text-gray-700 dark:text-gray-300">
+                                    <strong>Envoi à :</strong> {{ form.send_time }}
+                                </div>
+                                <div class="mt-2 text-sm text-gray-700 dark:text-gray-300">
+                                    <strong>Génération :</strong> {{ form.generation_frequency }} à {{ form.generation_time }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </AppLayout>
+</template>
+
+<style scoped>
+/* Bordure épaisse */
+.border-3 {
+  border-width: 3px;
+}
+
+/* Effet scale */
+.scale-102 {
+  transform: scale(1.02);
+}
+
+/* Animation smooth */
+.transition-all {
+  transition: all 0.2s ease-in-out;
+}
+</style>

@@ -1,17 +1,16 @@
 <script setup>
-import { Head, useForm } from '@inertiajs/vue3';
+import { Head, useForm, router } from '@inertiajs/vue3';
 import Button from '@/Components/ui/Button.vue';
 import { ref, computed } from 'vue';
-import { route } from 'ziggy-js';
 
 const form = useForm({
   name: '',
+  organization_name: '',
+  country: 'CI',
   email: '',
   password: '',
   password_confirmation: '',
-  company_name: '',
-  country_iso: 'CI',
-  agree_terms: false,
+  terms: false,
 });
 
 const showPassword = ref(false);
@@ -35,7 +34,7 @@ const passwordStrength = computed(() => {
 });
 
 const submit = () => {
-  form.post(route('signup.store'), {
+  form.post('/signup', {
     onSuccess: () => {
       // Redirection automatique vers onboarding
     },
@@ -151,10 +150,10 @@ const submit = () => {
         <!-- Form -->
         <form @submit.prevent="submit" class="space-y-5">
           
-          <!-- Name -->
+          <!-- Full Name -->
           <div>
             <label for="name" class="block text-sm font-medium text-dark-700 mb-1.5">
-              Nom complet
+              Votre nom
             </label>
             <input
               id="name"
@@ -166,6 +165,24 @@ const submit = () => {
             />
             <p v-if="form.errors.name" class="mt-1.5 text-sm text-red-600">
               {{ form.errors.name }}
+            </p>
+          </div>
+
+          <!-- Organization Name -->
+          <div>
+            <label for="organization_name" class="block text-sm font-medium text-dark-700 mb-1.5">
+              Nom de l'organisation
+            </label>
+            <input
+              id="organization_name"
+              v-model="form.organization_name"
+              type="text"
+              required
+              class="w-full px-4 py-3 border border-dark-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all hover:border-dark-300"
+              placeholder="Centre Hospitalier Cocody"
+            />
+            <p v-if="form.errors.organization_name" class="mt-1.5 text-sm text-red-600">
+              {{ form.errors.organization_name }}
             </p>
           </div>
 
@@ -187,47 +204,29 @@ const submit = () => {
             </p>
           </div>
 
-          <!-- Company Name -->
-          <div>
-            <label for="company_name" class="block text-sm font-medium text-dark-700 mb-1.5">
-              Nom de l'entreprise
-            </label>
-            <input
-              id="company_name"
-              v-model="form.company_name"
-              type="text"
-              required
-              class="w-full px-4 py-3 border border-dark-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all hover:border-dark-300"
-              placeholder="Centre Hospitalier Cocody"
-            />
-            <p v-if="form.errors.company_name" class="mt-1.5 text-sm text-red-600">
-              {{ form.errors.company_name }}
-            </p>
-          </div>
-
           <!-- Country -->
           <div>
-            <label for="country_iso" class="block text-sm font-medium text-dark-700 mb-1.5">
+            <label for="country" class="block text-sm font-medium text-dark-700 mb-1.5">
               Pays
             </label>
             <select
-              id="country_iso"
-              v-model="form.country_iso"
+              id="country"
+              v-model="form.country"
               required
               class="w-full px-4 py-3 border border-dark-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all hover:border-dark-300"
             >
               <option value="CI">🇨🇮 Côte d'Ivoire</option>
-              <option value="GH">🇬🇭 Ghana</option>
-              <option value="NG">🇳🇬 Nigeria</option>
               <option value="SN">🇸🇳 Sénégal</option>
               <option value="ML">🇲🇱 Mali</option>
               <option value="BF">🇧🇫 Burkina Faso</option>
-              <option value="CM">🇨🇲 Cameroun</option>
-              <option value="TG">🇹🇬 Togo</option>
               <option value="BJ">🇧🇯 Bénin</option>
+              <option value="TG">🇹🇬 Togo</option>
+              <option value="NE">🇳🇪 Niger</option>
+              <option value="GH">🇬🇭 Ghana</option>
+              <option value="NG">🇳🇬 Nigeria</option>
             </select>
-            <p v-if="form.errors.country_iso" class="mt-1.5 text-sm text-red-600">
-              {{ form.errors.country_iso }}
+            <p v-if="form.errors.country" class="mt-1.5 text-sm text-red-600">
+              {{ form.errors.country }}
             </p>
           </div>
 
@@ -314,13 +313,13 @@ const submit = () => {
           <!-- Terms -->
           <div class="flex items-start">
             <input
-              id="agree_terms"
-              v-model="form.agree_terms"
+              id="terms"
+              v-model="form.terms"
               type="checkbox"
               required
               class="mt-1 h-4 w-4 text-primary-600 focus:ring-primary-500 border-dark-300 rounded transition-colors"
             />
-            <label for="agree_terms" class="ml-2 block text-sm text-dark-600">
+            <label for="terms" class="ml-2 block text-sm text-dark-600">
               J'accepte les 
               <a href="/terms" class="text-primary-600 hover:text-primary-700 font-medium transition-colors">
                 conditions d'utilisation
@@ -331,8 +330,8 @@ const submit = () => {
               </a>
             </label>
           </div>
-          <p v-if="form.errors.agree_terms" class="text-sm text-red-600">
-            {{ form.errors.agree_terms }}
+          <p v-if="form.errors.terms" class="text-sm text-red-600">
+            {{ form.errors.terms }}
           </p>
 
           <!-- Submit Button avec Animation -->

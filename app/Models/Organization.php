@@ -67,6 +67,7 @@ class Organization extends Model
         'onboarding_completed',
         'onboarding_completed_at',
         'onboarding_step',
+        'last_commcare_sync_at',
     ];
 
     /**
@@ -84,6 +85,7 @@ class Organization extends Model
         'onboarding_completed_at' => 'datetime',
         'mobile_only' => 'boolean',
         'auto_format_e164' => 'boolean',
+        'last_commcare_sync_at' => 'datetime',
     ];
 
     /**

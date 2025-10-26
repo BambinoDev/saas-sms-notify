@@ -10,13 +10,16 @@ class CasesController extends Controller
 {
     public function index(Request $request)
     {
+        // CRITIQUE : Récupérer l'organisation de l'utilisateur connecté
+        $organization = auth()->user()->organization;
+        
         // Paramètres de filtrage/recherche
         $search = $request->input('search', '');
         $status = $request->input('status', 'all'); // all, active, eligible, ineligible
         $perPage = $request->input('per_page', 25);
 
-        // Query de base
-        $query = CaseModel::query();
+        // Query de base - FILTRÉ PAR ORGANISATION
+        $query = CaseModel::where('organization_id', $organization->id);
 
         // Recherche (nom ou téléphone)
         if ($search) {
@@ -65,14 +68,17 @@ class CasesController extends Controller
                 ];
             });
 
-        // Stats GLOBALES (indépendantes de la pagination)
+        // Stats FILTRÉES PAR ORGANISATION (indépendantes de la pagination)
         $stats = [
-            'total' => CaseModel::count(),
-            'active' => CaseModel::where('closed', false)->count(),
-            'eligible' => CaseModel::whereNotNull('contact_phone_number')
+            'total' => CaseModel::where('organization_id', $organization->id)->count(),
+            'active' => CaseModel::where('organization_id', $organization->id)
+                ->where('closed', false)->count(),
+            'eligible' => CaseModel::where('organization_id', $organization->id)
+                ->whereNotNull('contact_phone_number')
                 ->where('contact_phone_number', '!=', '')
                 ->count(),
-            'with_phone' => CaseModel::whereNotNull('contact_phone_number')
+            'with_phone' => CaseModel::where('organization_id', $organization->id)
+                ->whereNotNull('contact_phone_number')
                 ->where('contact_phone_number', '!=', '')
                 ->count(),
         ];
@@ -93,7 +99,12 @@ class CasesController extends Controller
      */
     public function show($id)
     {
-        $case = CaseModel::with('smsQueue')->findOrFail($id);
+        $organization = auth()->user()->organization;
+        
+        // CRITIQUE : Vérifier que le case appartient à l'organisation de l'utilisateur
+        $case = CaseModel::where('organization_id', $organization->id)
+            ->with('smsQueue')
+            ->findOrFail($id);
 
         return Inertia::render('Cases/Show', [
             'case' => [
@@ -133,11 +144,13 @@ class CasesController extends Controller
      */
     public function export(Request $request)
     {
+        $organization = auth()->user()->organization;
+        
         $search = $request->input('search', '');
         $status = $request->input('status', 'all');
 
-        // Query de base
-        $query = CaseModel::query();
+        // Query de base - FILTRÉ PAR ORGANISATION
+        $query = CaseModel::where('organization_id', $organization->id);
 
         // Recherche
         if ($search) {

@@ -12,6 +12,9 @@ class SmsController extends Controller
 {
     public function index(Request $request)
     {
+        // CRITIQUE : Récupérer l'organisation de l'utilisateur connecté
+        $organization = auth()->user()->organization;
+        
         // Paramètres de filtrage
         $search = $request->input('search', '');
         $status = $request->input('status', 'all');
@@ -19,8 +22,8 @@ class SmsController extends Controller
         $dateTo = $request->input('date_to', '');
         $perPage = $request->input('per_page', 25);
 
-        // Query de base avec relation case
-        $query = SmsQueue::with('case');
+        // Query de base avec relation case - FILTRÉ PAR ORGANISATION
+        $query = SmsQueue::where('organization_id', $organization->id)->with('case');
 
         // Recherche (nom ou téléphone)
         if ($search) {
@@ -45,13 +48,17 @@ class SmsController extends Controller
             $query->whereDate('scheduled_at', '<=', $dateTo);
         }
 
-        // Stats GLOBALES
+        // Stats FILTRÉES PAR ORGANISATION
         $stats = [
-            'total' => SmsQueue::count(),
-            'pending' => SmsQueue::where('status', 'pending')->count(),
-            'sent' => SmsQueue::where('status', 'sent')->count(),
-            'delivered' => SmsQueue::where('status', 'delivered')->count(),
-            'failed' => SmsQueue::where('status', 'failed')->count(),
+            'total' => SmsQueue::where('organization_id', $organization->id)->count(),
+            'pending' => SmsQueue::where('organization_id', $organization->id)
+                ->where('status', 'pending')->count(),
+            'sent' => SmsQueue::where('organization_id', $organization->id)
+                ->where('status', 'sent')->count(),
+            'delivered' => SmsQueue::where('organization_id', $organization->id)
+                ->where('status', 'delivered')->count(),
+            'failed' => SmsQueue::where('organization_id', $organization->id)
+                ->where('status', 'failed')->count(),
         ];
 
         // Pagination
@@ -107,16 +114,20 @@ class SmsController extends Controller
     }
 
     /**
-     * Get SMS stats
+     * Get SMS stats (FILTRÉES PAR ORGANISATION)
      */
-    private function getStats()
+    private function getStats($organizationId)
     {
         return [
-            'total' => SmsQueue::count(),
-            'pending' => SmsQueue::where('status', 'pending')->count(),
-            'sent' => SmsQueue::where('status', 'sent')->count(),
-            'delivered' => SmsQueue::where('status', 'delivered')->count(),
-            'failed' => SmsQueue::where('status', 'failed')->count(),
+            'total' => SmsQueue::where('organization_id', $organizationId)->count(),
+            'pending' => SmsQueue::where('organization_id', $organizationId)
+                ->where('status', 'pending')->count(),
+            'sent' => SmsQueue::where('organization_id', $organizationId)
+                ->where('status', 'sent')->count(),
+            'delivered' => SmsQueue::where('organization_id', $organizationId)
+                ->where('status', 'delivered')->count(),
+            'failed' => SmsQueue::where('organization_id', $organizationId)
+                ->where('status', 'failed')->count(),
         ];
     }
 
@@ -125,7 +136,12 @@ class SmsController extends Controller
      */
     public function show($id)
     {
-        $sms = SmsQueue::with('case')->findOrFail($id);
+        $organization = auth()->user()->organization;
+        
+        // CRITIQUE : Vérifier que le SMS appartient à l'organisation de l'utilisateur
+        $sms = SmsQueue::where('organization_id', $organization->id)
+            ->with('case')
+            ->findOrFail($id);
 
         return Inertia::render('Sms/Show', [
             'sms' => [
@@ -157,7 +173,11 @@ class SmsController extends Controller
      */
     public function retry($id)
     {
-        $sms = SmsQueue::findOrFail($id);
+        $organization = auth()->user()->organization;
+        
+        // CRITIQUE : Vérifier que le SMS appartient à l'organisation de l'utilisateur
+        $sms = SmsQueue::where('organization_id', $organization->id)
+            ->findOrFail($id);
 
         if ($sms->status !== 'failed') {
             return back()->with('error', 'Only failed SMS can be retried');
@@ -174,11 +194,14 @@ class SmsController extends Controller
     }
 
     /**
-     * Retry ALL failed SMS
+     * Retry ALL failed SMS (FILTRÉ PAR ORGANISATION)
      */
     public function retryAllFailed()
     {
-        $count = SmsQueue::where('status', 'failed')
+        $organization = auth()->user()->organization;
+        
+        $count = SmsQueue::where('organization_id', $organization->id)
+            ->where('status', 'failed')
             ->update([
                 'status' => 'pending',
                 'error_message' => null,
@@ -189,13 +212,15 @@ class SmsController extends Controller
     }
 
     /**
-     * Bulk retry failed SMS
+     * Bulk retry failed SMS (FILTRÉ PAR ORGANISATION)
      */
     public function bulkRetry(Request $request)
     {
+        $organization = auth()->user()->organization;
         $ids = $request->input('ids', []);
 
-        $count = SmsQueue::whereIn('id', $ids)
+        $count = SmsQueue::where('organization_id', $organization->id)
+            ->whereIn('id', $ids)
             ->where('status', 'failed')
             ->update([
                 'status' => 'pending',
@@ -211,7 +236,11 @@ class SmsController extends Controller
      */
     public function sendNow($id)
     {
-        $sms = SmsQueue::findOrFail($id);
+        $organization = auth()->user()->organization;
+        
+        // CRITIQUE : Vérifier que le SMS appartient à l'organisation de l'utilisateur
+        $sms = SmsQueue::where('organization_id', $organization->id)
+            ->findOrFail($id);
 
         if ($sms->status !== 'pending') {
             return back()->with('error', 'Seuls les SMS pending peuvent être envoyés immédiatement');
@@ -230,22 +259,28 @@ class SmsController extends Controller
      */
     public function destroy($id)
     {
-        $sms = SmsQueue::findOrFail($id);
+        $organization = auth()->user()->organization;
+        
+        // CRITIQUE : Vérifier que le SMS appartient à l'organisation de l'utilisateur
+        $sms = SmsQueue::where('organization_id', $organization->id)
+            ->findOrFail($id);
         $sms->delete();
 
         return redirect()->back()->with('success', 'SMS deleted successfully');
     }
 
     /**
-     * Export CSV
+     * Export CSV (FILTRÉ PAR ORGANISATION)
      */
     public function export(Request $request)
     {
+        $organization = auth()->user()->organization;
+        
         $status = $request->input('status', 'all');
         $dateFrom = $request->input('date_from', '');
         $dateTo = $request->input('date_to', '');
 
-        $query = SmsQueue::with('case');
+        $query = SmsQueue::where('organization_id', $organization->id)->with('case');
 
         if ($status !== 'all') {
             $query->where('status', $status);

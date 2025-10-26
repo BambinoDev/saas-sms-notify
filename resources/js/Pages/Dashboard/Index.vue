@@ -1,8 +1,13 @@
 <script setup>
 import { ref, computed } from 'vue';
-import { Head } from '@inertiajs/vue3';
+import { Head, Link } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import { Line } from 'vue-chartjs';
+import { 
+  RocketLaunchIcon,
+  ArrowPathIcon,
+  CheckCircleIcon,
+} from '@heroicons/vue/24/outline';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -27,11 +32,14 @@ ChartJS.register(
 );
 
 const props = defineProps({
+  organization: Object,
+  dashboardState: String, // 'empty' | 'active'
   stats: Object,
   smsActivity: Array,
   recentCases: Array,
   upcomingSms: Array,
   recentActivity: Array,
+  nextSteps: Array,
 });
 
 // Filtre période
@@ -97,10 +105,61 @@ const chartOptions = {
 
     <div class="py-12">
       <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+        <!-- EMPTY STATE -->
+        <div v-if="dashboardState === 'empty'" class="space-y-8">
+          <div class="bg-gradient-to-r from-green-500 to-blue-500 rounded-xl shadow-lg p-8 text-center text-white">
+            <div class="inline-flex items-center justify-center w-16 h-16 bg-white rounded-full mb-4">
+              <CheckCircleIcon class="h-10 w-10 text-green-500" />
+            </div>
+            <h1 class="text-3xl font-bold mb-2">Configuration terminée !</h1>
+            <p class="text-lg opacity-90">Votre projet <strong>{{ organization.commcare_project_name }}</strong> est prêt</p>
+          </div>
+
+          <div class="bg-white dark:bg-gray-800 rounded-xl shadow p-8">
+            <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-6">Votre configuration</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div class="text-center p-4 bg-blue-50 dark:bg-blue-900/30 rounded-lg">
+                <p class="text-sm text-gray-600 dark:text-gray-400 mb-1">Type de case</p>
+                <p class="text-2xl font-bold text-blue-600 dark:text-blue-400">{{ organization.commcare_case_type }}</p>
+              </div>
+              <div class="text-center p-4 bg-purple-50 dark:bg-purple-900/30 rounded-lg">
+                <p class="text-sm text-gray-600 dark:text-gray-400 mb-1">Propriétés</p>
+                <p class="text-2xl font-bold text-purple-600 dark:text-purple-400">{{ organization.case_properties_count }}</p>
+              </div>
+              <div class="text-center p-4 bg-green-50 dark:bg-green-900/30 rounded-lg">
+                <p class="text-sm text-gray-600 dark:text-gray-400 mb-1">Champ téléphone</p>
+                <p class="text-lg font-bold text-green-600 dark:text-green-400">{{ organization.phone_number_field }}</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="bg-white dark:bg-gray-800 rounded-xl shadow p-8">
+            <div class="flex items-center mb-6">
+              <RocketLaunchIcon class="h-8 w-8 text-blue-600 dark:text-blue-400 mr-3" />
+              <h2 class="text-2xl font-bold text-gray-900 dark:text-white">Prochaines étapes</h2>
+            </div>
+            <div class="space-y-4">
+              <div v-for="step in nextSteps" :key="step.priority" class="flex items-start p-6 bg-gray-50 dark:bg-gray-700/50 rounded-lg border-2 border-gray-200 dark:border-gray-600 hover:border-blue-500 dark:hover:border-blue-400 transition-all">
+                <div class="flex-shrink-0 w-10 h-10 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold mr-4">{{ step.priority }}</div>
+                <div class="flex-1">
+                  <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-1">{{ step.title }}</h3>
+                  <p class="text-sm text-gray-600 dark:text-gray-400 mb-3">{{ step.description }}</p>
+                  <Link :href="route(step.route)" class="inline-flex items-center px-4 py-2 bg-blue-600 text-white text-sm font-semibold rounded-lg hover:bg-blue-700 transition-colors">
+                    <ArrowPathIcon v-if="step.icon === 'sync'" class="h-5 w-5 mr-2" />
+                    {{ step.action }}
+                  </Link>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ACTIVE STATE -->
+        <div v-else>
         <!-- Header -->
         <div class="mb-8">
           <h1 class="text-3xl font-bold text-gray-900 dark:text-white">
-            Tableau de bord
+            Tableau de bord - {{ organization.name }}
           </h1>
           <p class="mt-2 text-gray-600 dark:text-gray-400">
             Bienvenue ! Voici ce qui se passe avec vos campagnes SMS.
@@ -208,6 +267,28 @@ const chartOptions = {
               </div>
             </div>
           </a>
+        </div>
+        </div>
+
+        <!-- Next Steps Section - Always show if there are steps -->
+        <div v-if="nextSteps && nextSteps.length > 0" class="bg-white dark:bg-gray-800 rounded-xl shadow p-8 mb-8">
+          <div class="flex items-center mb-6">
+            <RocketLaunchIcon class="h-8 w-8 text-blue-600 dark:text-blue-400 mr-3" />
+            <h2 class="text-2xl font-bold text-gray-900 dark:text-white">Prochaines étapes</h2>
+          </div>
+          <div class="space-y-4">
+            <div v-for="step in nextSteps" :key="step.priority" class="flex items-start p-6 bg-gray-50 dark:bg-gray-700/50 rounded-lg border-2 border-gray-200 dark:border-gray-600 hover:border-blue-500 dark:hover:border-blue-400 transition-all">
+              <div class="flex-shrink-0 w-10 h-10 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold mr-4">{{ step.priority }}</div>
+              <div class="flex-1">
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-1">{{ step.title }}</h3>
+                <p class="text-sm text-gray-600 dark:text-gray-400 mb-3">{{ step.description }}</p>
+                <Link :href="route(step.route)" class="inline-flex items-center px-4 py-2 bg-blue-600 text-white text-sm font-semibold rounded-lg hover:bg-blue-700 transition-colors">
+                  <ArrowPathIcon v-if="step.icon === 'sync'" class="h-5 w-5 mr-2" />
+                  {{ step.action }}
+                </Link>
+              </div>
+            </div>
+          </div>
         </div>
 
         <!-- SMS Activity Chart -->

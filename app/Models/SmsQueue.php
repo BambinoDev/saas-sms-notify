@@ -10,7 +10,8 @@ class SmsQueue extends Model
 
     protected $fillable = [
         'woman_id',
-        // 'rule_id', // ← COMMENTÉ car n'existe pas dans la table
+        'rule_id',          // ← Maintenant disponible après migration
+        'organization_id',
         'recipient_phone',
         'message_content',
         'sms_type',
@@ -40,12 +41,12 @@ class SmsQueue extends Model
     }
 
     /**
-     * Relationship with Rule (COMMENTED - rule_id doesn't exist)
+     * Relationship with Rule (maintenant disponible)
      */
-    // public function rule()
-    // {
-    //     return $this->belongsTo(SmsRule::class);
-    // }
+    public function rule()
+    {
+        return $this->belongsTo(SmsRule::class, 'rule_id');
+    }
 
     /**
      * Scope for pending SMS

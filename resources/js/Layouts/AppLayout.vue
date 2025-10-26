@@ -1,6 +1,7 @@
 <script setup>
 import { ref, computed } from 'vue';
 import { Link, usePage } from '@inertiajs/vue3';
+import { useAuth } from '@/Composables/useAuth';
 import { useI18n } from 'vue-i18n';
 import LanguageSwitcher from '@/Components/LanguageSwitcher.vue';
 
@@ -10,7 +11,7 @@ const sidebarOpen = ref(true);
 const userMenuOpen = ref(false);
 
 const page = usePage();
-const user = page.props.auth?.user;
+const { user, organization } = useAuth();
 const currentRoute = page.url;
 
 const navigation = computed(() => [

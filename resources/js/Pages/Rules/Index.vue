@@ -1,630 +1,417 @@
+<template>
+  <AppLayout title="Règles SMS">
+    <div class="py-12">
+      <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+        <!-- Header -->
+        <div class="mb-6 flex justify-between items-center">
+          <div>
+            <h1 class="text-3xl font-bold text-gray-900">Règles SMS</h1>
+            <p class="mt-2 text-sm text-gray-600">
+              Configurez la génération automatique et manuelle de vos SMS
+            </p>
+          </div>
+          <Link
+            href="/rules/create"
+            class="btn-primary"
+          >
+            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+            </svg>
+            Nouvelle règle
+          </Link>
+        </div>
+
+        <!-- Info génération automatique -->
+        <div class="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg flex items-start gap-3">
+          <svg class="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <div class="flex-1">
+            <h3 class="text-sm font-semibold text-blue-900">Génération automatique active</h3>
+            <p class="text-sm text-blue-700 mt-1">
+              Les règles actives génèrent automatiquement des SMS selon leur fréquence configurée.
+              Vous pouvez également forcer une génération manuelle à tout moment.
+            </p>
+          </div>
+        </div>
+
+        <!-- Liste des règles -->
+        <div class="space-y-4">
+          <div
+            v-for="rule in rules"
+            :key="rule.id"
+            class="bg-white shadow-sm rounded-lg border border-gray-200 hover:shadow-md transition-shadow"
+          >
+            <div class="p-6">
+              <!-- Header -->
+              <div class="flex justify-between items-start mb-4">
+                <div class="flex-1">
+                  <div class="flex items-center gap-3">
+                    <h3 class="text-lg font-semibold text-gray-900">{{ rule.name }}</h3>
+                    
+                    <!-- Toggle Active/Inactive -->
+                    <label class="relative inline-flex items-center cursor-pointer">
+                      <input
+                        type="checkbox"
+                        :checked="rule.is_active"
+                        @change="toggleActive(rule)"
+                        class="sr-only peer"
+                      />
+                      <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                    </label>
+                  </div>
+                  
+                  <p v-if="rule.description" class="mt-1 text-sm text-gray-600">
+                    {{ rule.description }}
+                  </p>
+
+                  <!-- Détails -->
+                  <div class="mt-3 flex flex-wrap gap-4 text-sm text-gray-600">
+                    <div class="flex items-center gap-1">
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
+                      </svg>
+                      <strong>{{ rule.template_name }}</strong>
+                    </div>
+                    <div class="flex items-center gap-1">
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      Génération : <strong>{{ formatFrequency(rule) }}</strong>
+                    </div>
+                    <div class="flex items-center gap-1">
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                      </svg>
+                      {{ formatCondition(rule) }}
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Badge Status -->
+                <div>
+                  <span
+                    v-if="rule.is_active && !rule.is_paused"
+                    class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800"
+                  >
+                    <span class="w-2 h-2 mr-1.5 bg-green-400 rounded-full animate-pulse"></span>
+                    Active
+                  </span>
+                  <span
+                    v-else-if="rule.is_paused"
+                    class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800"
+                  >
+                    <svg class="w-3 h-3 mr-1.5" fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zM7 8a1 1 0 012 0v4a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v4a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
+                    </svg>
+                    En pause
+                  </span>
+                  <span
+                    v-else
+                    class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800"
+                  >
+                    Inactive
+                  </span>
+                </div>
+              </div>
+
+              <!-- Raison pause -->
+              <div
+                v-if="rule.is_paused && rule.pause_reason"
+                class="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-md"
+              >
+                <p class="text-sm text-yellow-800">
+                  <strong>Raison :</strong> {{ rule.pause_reason }}
+                </p>
+                <p class="text-xs text-yellow-600 mt-1">
+                  Mise en pause {{ formatDate(rule.paused_at) }}
+                </p>
+              </div>
+
+              <!-- Prochaine génération automatique -->
+              <div
+                v-if="rule.is_active && !rule.is_paused && rule.next_generation_time"
+                class="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-md"
+              >
+                <p class="text-sm text-blue-800">
+                  <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <strong>Prochaine génération automatique :</strong> {{ formatDate(rule.next_generation_time) }}
+                </p>
+              </div>
+
+              <!-- Stats -->
+              <div class="grid grid-cols-4 gap-4 mb-4">
+                <div class="text-center p-3 bg-gray-50 rounded-lg">
+                  <div class="text-2xl font-bold text-gray-900">{{ rule.total_generated }}</div>
+                  <div class="text-xs text-gray-500 uppercase">Générés</div>
+                </div>
+                <div class="text-center p-3 bg-blue-50 rounded-lg">
+                  <div class="text-2xl font-bold text-blue-600">{{ rule.total_sent }}</div>
+                  <div class="text-xs text-gray-500 uppercase">Envoyés</div>
+                </div>
+                <div class="text-center p-3 bg-green-50 rounded-lg">
+                  <div class="text-2xl font-bold text-green-600">{{ rule.total_delivered }}</div>
+                  <div class="text-xs text-gray-500 uppercase">Délivrés</div>
+                </div>
+                <div class="text-center p-3 bg-red-50 rounded-lg">
+                  <div class="text-2xl font-bold text-red-600">{{ rule.total_failed }}</div>
+                  <div class="text-xs text-gray-500 uppercase">Échecs</div>
+                </div>
+              </div>
+
+              <!-- Taux succès + dernière génération -->
+              <div class="mb-4 flex justify-between text-sm text-gray-600">
+                <div v-if="rule.total_sent + rule.total_failed > 0">
+                  <strong>Taux de succès :</strong>
+                  <span :class="{
+                    'text-green-600': rule.success_rate >= 90,
+                    'text-yellow-600': rule.success_rate >= 70 && rule.success_rate < 90,
+                    'text-red-600': rule.success_rate < 70
+                  }">
+                    {{ rule.success_rate }}%
+                  </span>
+                </div>
+                <div v-if="rule.last_generated_at">
+                  <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  Dernière génération : {{ formatDate(rule.last_generated_at) }}
+                </div>
+              </div>
+
+              <!-- Actions -->
+              <div class="flex flex-wrap gap-2">
+                <!-- Générer maintenant -->
+                <button
+                  @click="generateNow(rule)"
+                  :disabled="!rule.is_active || rule.is_paused || generating[rule.id]"
+                  class="btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <svg v-if="!generating[rule.id]" class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <svg v-else class="animate-spin w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  {{ generating[rule.id] ? 'Génération...' : 'Générer maintenant' }}
+                </button>
+
+                <!-- Pause/Resume -->
+                <button
+                  v-if="!rule.is_paused"
+                  @click="pauseRule(rule)"
+                  :disabled="!rule.is_active"
+                  class="btn-warning disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zM7 8a1 1 0 012 0v4a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v4a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
+                  </svg>
+                  Pause
+                </button>
+                <button
+                  v-else
+                  @click="resumeRule(rule)"
+                  class="btn-success"
+                >
+                  <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  Reprendre
+                </button>
+
+                <!-- Éditer -->
+                <Link
+                  :href="`/rules/${rule.id}/edit`"
+                  class="btn-secondary"
+                >
+                  <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                  </svg>
+                  Éditer
+                </Link>
+
+                <!-- Supprimer -->
+                <button
+                  @click="deleteRule(rule)"
+                  class="btn-danger"
+                >
+                  <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                  Supprimer
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- État vide -->
+        <div v-if="rules.length === 0" class="text-center py-12">
+          <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </svg>
+          <h3 class="mt-2 text-sm font-medium text-gray-900">Aucune règle</h3>
+          <p class="mt-1 text-sm text-gray-500">
+            Créez votre première règle pour automatiser l'envoi de SMS
+          </p>
+          <div class="mt-6">
+            <Link
+              href="/rules/create"
+              class="btn-primary"
+            >
+              Créer une règle
+            </Link>
+          </div>
+        </div>
+      </div>
+    </div>
+  </AppLayout>
+</template>
+
 <script setup>
-import { ref, computed } from 'vue';
-import { Head, router } from '@inertiajs/vue3';
+import { ref } from 'vue';
+import { Link, router } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
-import { useI18n } from 'vue-i18n';
 
-const { t } = useI18n();
-
-// Props from backend
 const props = defineProps({
-  rules: Object,
-  templates: Array,
-  stats: Object,
-  filters: Object,
+  rules: Array,
 });
 
-// State
-const search = ref(props.filters?.search || '');
-const typeFilter = ref(props.filters?.type || 'all');
-const statusFilter = ref(props.filters?.status || 'all');
-const showModal = ref(false);
-const modalMode = ref('create');
-const editingRule = ref(null);
-const perPage = ref(25);
+const generating = ref({});
 
-// Form data avec valeurs par défaut
-const form = ref({
-  id: null,
-  name: '',
-  type: 'reminder',
-  days_before: 0,
-  sending_time: '09:00',
-  priority: 1,
-  window_start: '09:00',
-  window_end: '21:00',
-  template: '',
-  status: 'active',
-});
-
-// Character count
-const characterCount = computed(() => form.value.template?.length || 0);
-const maxCharacters = 160;
-
-// Ouvrir modal création
-const openCreateModal = () => {
-  modalMode.value = 'create';
-  form.value = {
-    id: null,
-    name: '',
-    type: 'reminder',
-    days_before: 0,
-    sending_time: '09:00',
-    priority: 1,
-    window_start: '09:00',
-    window_end: '21:00',
-    template: '',
-    status: 'active',
-  };
-  showModal.value = true;
-};
-
-// Ouvrir modal édition
-const openEditModal = (rule) => {
-  modalMode.value = 'edit';
-  editingRule.value = rule;
-  
-  form.value = {
-    id: rule.id,
-    name: rule.name || '',
-    type: rule.type || 'reminder',
-    days_before: rule.days_before || 0,
-    sending_time: rule.sending_time || '09:00',
-    priority: rule.priority || 1,
-    window_start: rule.window_start || '09:00',
-    window_end: rule.window_end || '21:00',
-    template: rule.template || '',
-    status: rule.status || 'active',
-  };
-  
-  showModal.value = true;
-};
-
-// Fermer modal
-const closeModal = () => {
-  showModal.value = false;
-  editingRule.value = null;
-};
-
-// Sauvegarder rule - CORRECTION ICI
-const saveRule = () => {
-  // Normaliser les heures avant envoi (enlever les secondes si présentes: "09:00:00" -> "09:00")
-  const dataToSend = {
-    name: form.value.name,
-    type: form.value.type,
-    days_before: form.value.days_before,
-    sending_time: form.value.sending_time?.substring(0, 5) || '09:00',
-    priority: form.value.priority,
-    template: form.value.template,
-    status: form.value.status,
-    // window_start et window_end NON ENVOYÉS (colonnes pas encore migrées)
-  };
-
-  console.log('Data to send:', dataToSend); // Debug
-
-  if (modalMode.value === 'create') {
-    // Création
-    router.post('/rules', dataToSend, {
-      onSuccess: () => {
-        closeModal();
-      },
-      onError: (errors) => {
-        console.error('Creation errors:', errors);
-        alert('Erreur lors de la création:\n' + Object.entries(errors).map(([k, v]) => `${k}: ${v}`).join('\n'));
-      },
-    });
-  } else {
-    // Mise à jour
-    router.put(`/rules/${form.value.id}`, dataToSend, {
-      preserveState: true,
-      preserveScroll: true,
-      onSuccess: () => {
-        closeModal();
-      },
-      onError: (errors) => {
-        console.error('Update errors:', errors);
-        alert('Erreur lors de la mise à jour:\n' + Object.entries(errors).map(([k, v]) => `${k}: ${v}`).join('\n'));
-      },
-    });
-  }
-};
-
-// Supprimer rule
-const deleteRule = (ruleId) => {
-  if (!confirm('Êtes-vous sûr de vouloir supprimer cette règle ?')) {
+// Générer maintenant
+const generateNow = (rule) => {
+  if (!confirm(`Voulez-vous générer les SMS pour "${rule.name}" maintenant ?\n\nCela créera des SMS pour tous les cases éligibles selon les conditions de la règle.`)) {
     return;
   }
 
-  router.delete(`/rules/${ruleId}`, {
-    onSuccess: () => {
-      // Success
-    },
-    onError: (errors) => {
-      console.error('Delete errors:', errors);
-      alert('Erreur lors de la suppression: ' + JSON.stringify(errors));
+  generating.value[rule.id] = true;
+
+  router.post(`/rules/${rule.id}/generate`, {}, {
+    preserveScroll: true,
+    onFinish: () => {
+      generating.value[rule.id] = false;
     },
   });
 };
 
-// Toggle rule status
-const toggleRuleStatus = (rule) => {
-  router.post(`/rules/${rule.id}/toggle`, {}, {
+// Pause
+const pauseRule = (rule) => {
+  const reason = prompt('Raison de la pause (optionnel) :', '');
+  if (reason === null) return;
+
+  router.post(`/rules/${rule.id}/pause`, { reason }, {
     preserveScroll: true,
   });
 };
 
-// Copier template depuis une règle existante
-const copyTemplate = (ruleId) => {
-  if (!ruleId) return;
-  
-  const rule = props.templates.find(t => t.id === parseInt(ruleId));
-  if (rule && rule.message) {
-    form.value.template = rule.message;
-  }
+// Resume
+const resumeRule = (rule) => {
+  if (!confirm(`Voulez-vous reprendre la règle "${rule.name}" ?\n\nLa génération automatique reprendra selon la fréquence configurée.`)) return;
+
+  router.post(`/rules/${rule.id}/resume`, {}, {
+    preserveScroll: true,
+  });
 };
 
-// Get type badge
-const getTypeBadge = (type) => {
-  const badges = {
-    reminder: 'bg-blue-100 text-blue-700',
-    followup: 'bg-purple-100 text-purple-700',
-    confirmation: 'bg-green-100 text-green-700',
-  };
-  return badges[type] || 'bg-gray-100 text-gray-700';
-};
-
-// Get days label
-const getDaysLabel = (days) => {
-  if (days > 0) return `J-${days}`;
-  if (days < 0) return `J+${Math.abs(days)}`;
-  return 'J-Day';
-};
-
-// Apply filters
-const applyFilters = () => {
-  router.get('/rules', {
-    search: search.value,
-    type: typeFilter.value,
-    status: statusFilter.value,
-    per_page: perPage.value,
+// Toggle active
+const toggleActive = (rule) => {
+  router.put(`/rules/${rule.id}`, {
+    is_active: !rule.is_active,
   }, {
-    preserveState: true,
     preserveScroll: true,
+  });
+};
+
+// Delete
+const deleteRule = (rule) => {
+  if (!confirm(`Êtes-vous sûr de vouloir supprimer la règle "${rule.name}" ?\n\nCette action est irréversible.`)) {
+    return;
+  }
+
+  router.delete(`/rules/${rule.id}`, {
+    preserveScroll: true,
+  });
+};
+
+// Format fréquence
+const formatFrequency = (rule) => {
+  const freqMap = {
+    'daily': 'Quotidien',
+    'weekly': 'Hebdomadaire',
+    'monthly': 'Mensuel',
+  };
+  
+  const freq = freqMap[rule.generation_frequency] || rule.generation_frequency;
+  return `${freq} à ${rule.generation_time}`;
+};
+
+// Format condition
+const formatCondition = (rule) => {
+  const condMap = {
+    'before': 'avant',
+    'after': 'après',
+    'equals': '=',
+  };
+
+  return `${rule.trigger_field} ${condMap[rule.trigger_condition]} ${rule.trigger_value} ${rule.trigger_unit}`;
+};
+
+// Format date
+const formatDate = (date) => {
+  if (!date) return '';
+  
+  const d = new Date(date);
+  const now = new Date();
+  const diff = Math.floor((now - d) / 1000);
+
+  if (diff < 0) {
+    // Date future
+    const absDiff = Math.abs(diff);
+    if (absDiff < 3600) return `Dans ${Math.floor(absDiff / 60)} min`;
+    if (absDiff < 86400) return `Dans ${Math.floor(absDiff / 3600)}h`;
+    if (absDiff < 604800) return `Dans ${Math.floor(absDiff / 86400)}j`;
+  } else {
+    // Date passée
+    if (diff < 60) return 'À l\'instant';
+    if (diff < 3600) return `Il y a ${Math.floor(diff / 60)} min`;
+    if (diff < 86400) return `Il y a ${Math.floor(diff / 3600)}h`;
+    if (diff < 604800) return `Il y a ${Math.floor(diff / 86400)}j`;
+  }
+
+  return d.toLocaleDateString('fr-FR', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
   });
 };
 </script>
 
-<template>
-  <Head title="Rules - S-Remind" />
+<style scoped>
+.btn-primary {
+  @apply inline-flex items-center px-4 py-2 bg-blue-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-blue-700 focus:bg-blue-700 active:bg-blue-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition ease-in-out duration-150;
+}
 
-  <AppLayout>
-    
-    <!-- Breadcrumb -->
-    <template #breadcrumb>
-      <nav class="flex items-center space-x-2 text-sm">
-        <a href="/dashboard" class="text-dark-500 hover:text-dark-900">{{ t('nav.dashboard') }}</a>
-        <svg class="w-4 h-4 text-dark-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-        </svg>
-        <span class="text-dark-900 font-medium">{{ t('nav.rules') }}</span>
-      </nav>
-    </template>
+.btn-secondary {
+  @apply inline-flex items-center px-4 py-2 bg-white border border-gray-300 rounded-md font-semibold text-xs text-gray-700 uppercase tracking-widest shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition ease-in-out duration-150;
+}
 
-    <!-- Page Header -->
-    <div class="mb-6">
-      <div class="flex items-center justify-between mb-4">
-        <div>
-          <h1 class="text-2xl font-bold text-dark-900">SMS Rules</h1>
-          <p class="text-sm text-dark-500 mt-0.5">Configure when and how SMS reminders are sent</p>
-        </div>
-        <div class="flex items-center space-x-2">
-          <button class="px-3 py-2 text-sm border border-dark-300 text-dark-700 hover:bg-dark-50 rounded-lg flex items-center space-x-1.5 transition-colors">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-            </svg>
-            <span>{{ t('common.export') }}</span>
-          </button>
-          <button @click="openCreateModal" class="px-3 py-2 text-sm bg-primary-600 hover:bg-primary-700 text-white rounded-lg flex items-center space-x-1.5 transition-colors">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-            </svg>
-            <span>New Rule</span>
-          </button>
-        </div>
-      </div>
+.btn-warning {
+  @apply inline-flex items-center px-4 py-2 bg-yellow-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-yellow-700 focus:bg-yellow-700 active:bg-yellow-900 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2 transition ease-in-out duration-150;
+}
 
-      <!-- Stats Row -->
-      <div class="grid grid-cols-4 gap-4">
-        <div class="bg-white rounded-xl border border-dark-200 p-4">
-          <div class="flex items-start justify-between">
-            <div class="flex-1">
-              <p class="text-xs text-dark-500 mb-1">Total Rules</p>
-              <p class="text-2xl font-bold text-dark-900">{{ props.stats?.total || 0 }}</p>
-            </div>
-            <div class="w-10 h-10 bg-primary-50 rounded-lg flex items-center justify-center">
-              <svg class="w-5 h-5 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
-              </svg>
-            </div>
-          </div>
-        </div>
+.btn-success {
+  @apply inline-flex items-center px-4 py-2 bg-green-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-green-700 focus:bg-green-700 active:bg-green-900 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition ease-in-out duration-150;
+}
 
-        <div class="bg-white rounded-xl border border-dark-200 p-4">
-          <div class="flex items-start justify-between">
-            <div class="flex-1">
-              <p class="text-xs text-dark-500 mb-1">Active</p>
-              <p class="text-2xl font-bold text-success-600">{{ props.stats?.active || 0 }}</p>
-            </div>
-            <div class="w-10 h-10 bg-success-50 rounded-lg flex items-center justify-center">
-              <svg class="w-5 h-5 text-success-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            </div>
-          </div>
-        </div>
-
-        <div class="bg-white rounded-xl border border-dark-200 p-4">
-          <div class="flex items-start justify-between">
-            <div class="flex-1">
-              <p class="text-xs text-dark-500 mb-1">Inactive</p>
-              <p class="text-2xl font-bold text-dark-400">{{ props.stats?.inactive || 0 }}</p>
-            </div>
-            <div class="w-10 h-10 bg-dark-50 rounded-lg flex items-center justify-center">
-              <svg class="w-5 h-5 text-dark-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
-              </svg>
-            </div>
-          </div>
-        </div>
-
-        <div class="bg-white rounded-xl border border-dark-200 p-4">
-          <div class="flex items-start justify-between">
-            <div class="flex-1">
-              <p class="text-xs text-dark-500 mb-1">Total Sent</p>
-              <p class="text-2xl font-bold text-accent-600">{{ props.stats?.total_sent || 0 }}</p>
-            </div>
-            <div class="w-10 h-10 bg-accent-50 rounded-lg flex items-center justify-center">
-              <svg class="w-5 h-5 text-accent-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
-              </svg>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Table Card -->
-    <div class="bg-white rounded-xl border border-dark-200 overflow-hidden">
-      
-      <!-- Header with Filters -->
-      <div class="p-4 border-b border-dark-200">
-        <div class="flex items-center justify-between gap-4">
-          <h3 class="text-base font-semibold text-dark-900">All Rules</h3>
-          
-          <div class="flex items-center gap-3 flex-1 max-w-2xl">
-            <!-- Search -->
-            <div class="relative flex-1">
-              <input
-                v-model="search"
-                type="text"
-                placeholder="Search rules..."
-                class="w-full pl-9 pr-4 py-1.5 text-sm border border-dark-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-              />
-              <svg class="absolute left-3 top-2 w-4 h-4 text-dark-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
-            </div>
-
-            <!-- Type Filter -->
-            <select
-              v-model="typeFilter"
-              class="px-3 py-1.5 text-sm border border-dark-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-            >
-              <option value="all">All Types</option>
-              <option value="reminder">Reminder</option>
-              <option value="followup">Follow-up</option>
-              <option value="confirmation">Confirmation</option>
-            </select>
-
-            <!-- Status Filter -->
-            <select
-              v-model="statusFilter"
-              class="px-3 py-1.5 text-sm border border-dark-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-            >
-              <option value="all">All Status</option>
-              <option value="active">Active</option>
-              <option value="inactive">Inactive</option>
-            </select>
-          </div>
-        </div>
-      </div>
-
-      <!-- Table -->
-      <div class="overflow-x-auto">
-        <table class="w-full">
-          <thead class="bg-gray-50 border-b border-dark-100">
-            <tr>
-              <th class="px-6 py-3 text-left text-xs font-medium text-dark-500 uppercase tracking-wider">Rule Name</th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-dark-500 uppercase tracking-wider">Type</th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-dark-500 uppercase tracking-wider">Timing</th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-dark-500 uppercase tracking-wider">Template</th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-dark-500 uppercase tracking-wider">Sent</th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-dark-500 uppercase tracking-wider">Status</th>
-              <th class="px-6 py-3 text-center text-xs font-medium text-dark-500 uppercase tracking-wider">Actions</th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-dark-100">
-            <tr 
-              v-for="rule in props.rules?.data || []" 
-              :key="rule.id"
-              class="hover:bg-gray-50 transition-colors"
-            >
-              <td class="px-6 py-3">
-                <div>
-                  <p class="text-sm font-medium text-dark-900">{{ rule.name }}</p>
-                  <p class="text-xs text-dark-500">Priority: {{ rule.priority }}</p>
-                </div>
-              </td>
-              <td class="px-6 py-3">
-                <span :class="['inline-block px-2 py-0.5 text-xs font-medium rounded capitalize', getTypeBadge(rule.type)]">
-                  {{ rule.type }}
-                </span>
-              </td>
-              <td class="px-6 py-3">
-                <div>
-                  <p class="text-sm font-medium text-dark-900">{{ getDaysLabel(rule.days_before) }}</p>
-                  <p class="text-xs text-dark-500">at {{ rule.sending_time }}</p>
-                </div>
-              </td>
-              <td class="px-6 py-3">
-                <p class="text-sm text-dark-700 truncate max-w-xs">{{ rule.template || 'N/A' }}</p>
-              </td>
-              <td class="px-6 py-3">
-                <span class="text-sm font-medium text-dark-900">{{ rule.sent_count || 0 }}</span>
-              </td>
-              <td class="px-6 py-3">
-                <button
-                  @click="toggleRuleStatus(rule)"
-                  :class="[
-                    'inline-flex items-center px-2 py-0.5 text-xs font-medium rounded capitalize transition-colors',
-                    rule.status === 'active' 
-                      ? 'bg-green-100 text-green-700 hover:bg-green-200' 
-                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                  ]"
-                >
-                  <span class="w-1.5 h-1.5 rounded-full mr-1.5" :class="rule.status === 'active' ? 'bg-green-500' : 'bg-gray-400'"></span>
-                  {{ rule.status }}
-                </button>
-              </td>
-              <td class="px-6 py-3">
-                <div class="flex items-center justify-center gap-2">
-                  <button 
-                    @click="openEditModal(rule)"
-                    class="text-primary-600 hover:text-primary-700 text-sm font-medium"
-                  >
-                    {{ t('common.edit') }}
-                  </button>
-                  <button 
-                    @click="deleteRule(rule.id)"
-                    class="text-red-600 hover:text-red-700 text-sm font-medium"
-                  >
-                    {{ t('common.delete') }}
-                  </button>
-                </div>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-
-      <!-- Footer with Pagination -->
-      <div class="px-6 py-3 border-t border-dark-200 flex items-center justify-between">
-        <div class="flex items-center gap-2">
-          <span class="text-sm text-dark-600">
-            Showing {{ props.rules?.from || 0 }} to {{ props.rules?.to || 0 }} of {{ props.rules?.total || 0 }}
-          </span>
-        </div>
-
-        <div class="flex items-center gap-1">
-          <button 
-            v-for="(link, index) in props.rules?.links || []" 
-            :key="index"
-            @click="link.url && router.get(link.url)"
-            :class="[
-              'px-3 py-1.5 text-sm rounded transition-colors',
-              link.active ? 'bg-primary-600 text-white font-medium' : 'border border-dark-300 text-dark-700 hover:bg-dark-50',
-              !link.url && 'opacity-50 cursor-not-allowed'
-            ]"
-            :disabled="!link.url"
-            v-html="link.label"
-          ></button>
-        </div>
-      </div>
-
-    </div>
-
-    <!-- Edit/Create Modal -->
-    <Teleport to="body">
-      <div
-        v-if="showModal"
-        class="fixed inset-0 z-50 overflow-y-auto"
-        aria-labelledby="modal-title"
-        role="dialog"
-        aria-modal="true"
-      >
-        <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
-          <!-- Background overlay -->
-          <div
-            class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"
-            @click="closeModal"
-          ></div>
-
-          <!-- Modal panel -->
-          <div class="inline-block align-bottom bg-white dark:bg-gray-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-2xl sm:w-full">
-            <div class="bg-white dark:bg-gray-800 px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-              <div class="flex items-center justify-between mb-4">
-                <h3 class="text-lg font-medium text-gray-900 dark:text-white">
-                  {{ modalMode === 'create' ? 'Create Rule' : 'Edit Rule' }}
-                </h3>
-                <button
-                  @click="closeModal"
-                  class="text-gray-400 hover:text-gray-500 dark:hover:text-gray-300"
-                >
-                  <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              </div>
-
-              <form @submit.prevent="saveRule" class="space-y-4">
-                <!-- Rule Name & Type -->
-                <div class="grid grid-cols-2 gap-4">
-                  <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Rule Name
-                    </label>
-                    <input
-                      v-model="form.name"
-                      type="text"
-                      required
-                      class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
-                    />
-                  </div>
-                  <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Type
-                    </label>
-                    <select
-                      v-model="form.type"
-                      class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
-                    >
-                      <option value="reminder">Reminder</option>
-                      <option value="confirmation">Confirmation</option>
-                      <option value="notification">Notification</option>
-                    </select>
-                  </div>
-                </div>
-
-                <!-- Days Before, Sending Time, Priority -->
-                <div class="grid grid-cols-3 gap-4">
-                  <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Days Before/After
-                    </label>
-                    <input
-                      v-model.number="form.days_before"
-                      type="number"
-                      required
-                      class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
-                    />
-                    <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                      Positive = before, Negative = after
-                    </p>
-                  </div>
-                  <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Sending Time
-                    </label>
-                    <input
-                      v-model="form.sending_time"
-                      type="time"
-                      required
-                      class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
-                    />
-                  </div>
-                  <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Priority
-                    </label>
-                    <input
-                      v-model.number="form.priority"
-                      type="number"
-                      min="1"
-                      required
-                      class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
-                    />
-                  </div>
-                </div>
-
-                <!-- Template Message -->
-                <div>
-                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Template Message
-                  </label>
-                  <textarea
-                    v-model="form.template"
-                    rows="4"
-                    required
-                    :maxlength="maxCharacters"
-                    class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
-                    placeholder="Bonjour Mme {case_name}, n'oubliez pas..."
-                  ></textarea>
-                  <div class="mt-1 flex items-center justify-between text-xs">
-                    <span class="text-gray-500 dark:text-gray-400">
-                      Variables: {case_name}, {anc_number}, {visit_date}, {district}
-                    </span>
-                    <span class="text-gray-500 dark:text-gray-400">
-                      {{ characterCount }} / {{ maxCharacters }}
-                    </span>
-                  </div>
-                </div>
-
-                <!-- Quick Load Template (optionnel) -->
-                <div v-if="templates && templates.length > 0">
-                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Quick Load Template
-                  </label>
-                  <select
-                    @change="copyTemplate($event.target.value)"
-                    class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
-                  >
-                    <option value="">-- Copy from existing rule --</option>
-                    <option
-                      v-for="template in templates"
-                      :key="template.id"
-                      :value="template.id"
-                    >
-                      {{ template.name }}
-                    </option>
-                  </select>
-                </div>
-
-                <!-- Status -->
-                <div>
-                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Status
-                  </label>
-                  <select
-                    v-model="form.status"
-                    class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
-                  >
-                    <option value="active">Active</option>
-                    <option value="inactive">Inactive</option>
-                  </select>
-                </div>
-
-                <!-- Actions -->
-                <div class="flex justify-end gap-3 mt-6">
-                  <button
-                    type="button"
-                    @click="closeModal"
-                    class="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-                  >
-                    Annuler
-                  </button>
-                  <button
-                    type="submit"
-                    class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                  >
-                    {{ modalMode === 'create' ? 'Create Rule' : 'Update Rule' }}
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        </div>
-      </div>
-    </Teleport>
-
-  </AppLayout>
-</template>
+.btn-danger {
+  @apply inline-flex items-center px-4 py-2 bg-red-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-red-700 focus:bg-red-700 active:bg-red-900 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition ease-in-out duration-150;
+}
+</style>

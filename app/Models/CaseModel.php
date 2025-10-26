@@ -17,6 +17,7 @@ class CaseModel extends Model
      * The attributes that are mass assignable.
      */
     protected $fillable = [
+        'organization_id',
         'case_id',
         'case_name',
         'contact_phone_number',

@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Log;
 class CommCareService
 {
     private string $baseUrl = 'https://www.commcarehq.org';
-    private int $timeout = 30;
+    private int $timeout = 60; // Augmenté pour les gros volumes
 
     /**
      * Test la connexion à CommCare
@@ -493,6 +493,45 @@ class CommCareService
             }
 
             return [];
+        }
+    }
+
+    /**
+     * Appel API générique vers CommCare
+     */
+    public function makeApiCall(string $email, string $apiKey, string $url): array
+    {
+        try {
+            $response = Http::timeout($this->timeout)
+                ->withHeaders([
+                    'Authorization' => "ApiKey {$email}:{$apiKey}",
+                ])
+                ->get($url);
+
+            if (!$response->successful()) {
+                return [
+                    'success' => false,
+                    'message' => "Erreur HTTP {$response->status()}",
+                    'data' => null,
+                ];
+            }
+
+            return [
+                'success' => true,
+                'message' => 'Données récupérées avec succès',
+                'data' => $response->json(),
+            ];
+        } catch (\Exception $e) {
+            Log::error('CommCare API call failed', [
+                'url' => $url,
+                'error' => $e->getMessage(),
+            ]);
+
+            return [
+                'success' => false,
+                'message' => $e->getMessage(),
+                'data' => null,
+            ];
         }
     }
 }

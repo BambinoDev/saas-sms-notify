@@ -3,7 +3,7 @@
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\CasesController;
-use App\Http\Controllers\SignupController;
+use App\Http\Controllers\Auth\SignupController;
 use App\Http\Controllers\SmsController;
 use App\Http\Controllers\TemplatesController;
 use App\Http\Controllers\RulesController;
@@ -30,10 +30,7 @@ Route::get('/welcome', function () {
 })->name('landing');
 
 // Signup routes
-Route::get('/signup', function () {
-    return Inertia::render('Auth/Signup');
-})->name('signup');
-
+Route::get('/signup', [SignupController::class, 'create'])->name('signup');
 Route::post('/signup', [SignupController::class, 'store'])->name('signup.store');
 
 // ============================================
@@ -81,11 +78,20 @@ Route::middleware(['auth'])->prefix('onboarding')->name('onboarding.')->group(fu
 Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 Route::get('/', [DashboardController::class, 'index'])->name('home');
 
-// Cases CRUD
+// Cases CRUD - Routes spécifiques AVANT les routes avec paramètres
 Route::get('/cases', [CasesController::class, 'index'])->name('cases.index');
 Route::get('/cases/export', [CasesController::class, 'export'])->name('cases.export');
+
+// Synchronisation CommCare (client) - AVANT les routes avec {id}
+Route::middleware(['auth'])->prefix('cases')->name('cases.')->group(function () {
+    Route::get('/sync', [\App\Http\Controllers\CaseSyncController::class, 'index'])->name('sync');
+    Route::post('/sync', [\App\Http\Controllers\CaseSyncController::class, 'sync'])->name('sync.start');
+    Route::get('/sync/status', [\App\Http\Controllers\CaseSyncController::class, 'status'])->name('sync.status');
+});
+
+// Routes avec paramètres - APRÈS les routes spécifiques
 Route::get('/cases/{id}', [CasesController::class, 'show'])->name('cases.show');
-Route::post('/cases/{id}/sync', [CasesController::class, 'sync'])->name('cases.sync');
+Route::post('/cases/{id}/sync', [CasesController::class, 'sync'])->name('cases.sync.single');
 
 // SMS Queue (avec backend)
 Route::get('/sms', [SmsController::class, 'index'])->name('sms.index');
@@ -103,8 +109,7 @@ Route::post('/sms/replanification', [SmsReplanificationController::class, 'repla
 Route::post('/sms/replanification/template', [SmsReplanificationController::class, 'replanifyByTemplate'])->name('sms.replanify.template');
 Route::get('/sms/replanification/stats', [SmsReplanificationController::class, 'stats'])->name('sms.replanification.stats');
 
-// Route SMS avec paramètre - APRÈS les routes spécifiques
-Route::get('/sms/{id}', [SmsController::class, 'show'])->name('sms.show');
+// Route SMS avec paramètre - APRÈS les routes spécifiques (déjà définie plus haut)
 
 Route::get('/women', [WomenController::class, 'index'])->name('women.index');
 
@@ -112,29 +117,27 @@ Route::get('/settings', [SettingsController::class, 'index'])->name('settings.in
 Route::post('/settings', [SettingsController::class, 'update'])->name('settings.update');
 Route::post('/settings/sync', [SettingsController::class, 'syncCommCare'])->name('settings.sync');
 
-// Templates (avec backend)
-Route::get('/templates', [TemplatesController::class, 'index'])->name('templates.index');
-Route::post('/templates', [TemplatesController::class, 'store'])->name('templates.store');
-Route::put('/templates/{id}', [TemplatesController::class, 'update'])->name('templates.update');
-Route::delete('/templates/{id}', [TemplatesController::class, 'destroy'])->name('templates.destroy');
-Route::post('/templates/{id}/duplicate', [TemplatesController::class, 'duplicate'])->name('templates.duplicate');
-Route::post('/templates/preview', [TemplatesController::class, 'preview'])->name('templates.preview');
-Route::post('/templates/{id}/toggle', [TemplatesController::class, 'toggleStatus'])->name('templates.toggle');
-
-// Rules (avec backend complet)
-Route::get('/rules', [RulesController::class, 'index'])->name('rules.index');
-Route::post('/rules', [RulesController::class, 'store'])->name('rules.store');
-Route::put('/rules/{id}', [RulesController::class, 'update'])->name('rules.update');
-Route::delete('/rules/{id}', [RulesController::class, 'destroy'])->name('rules.destroy');
-Route::post('/rules/{id}/toggle', [RulesController::class, 'toggleStatus'])->name('rules.toggle');
-Route::post('/rules/priority', [RulesController::class, 'updatePriority'])->name('rules.priority');
-
-// Routes SMS Rules
-Route::get('/settings/sms-rules', [SmsRuleController::class, 'index'])->name('sms-rules.index');
-Route::post('/settings/sms-rules', [SmsRuleController::class, 'store'])->name('sms-rules.store');
-Route::post('/settings/sms-rules/{rule}/update', [SmsRuleController::class, 'update'])->name('sms-rules.update');
-Route::delete('/settings/sms-rules/{rule}', [SmsRuleController::class, 'destroy'])->name('sms-rules.destroy');
-Route::post('/settings/sms-rules/{rule}/toggle', [SmsRuleController::class, 'toggle'])->name('sms-rules.toggle');
+// SMS Templates (nouveau système)
+Route::middleware(['auth'])->group(function () {
+    Route::resource('templates', App\Http\Controllers\SmsTemplateController::class);
+    
+    // SMS Rules (nouveau système)
+    Route::resource('rules', App\Http\Controllers\SmsRuleController::class);
+    Route::post('rules/{rule}/toggle', [App\Http\Controllers\SmsRuleController::class, 'toggle'])
+        ->name('rules.toggle');
+    Route::post('rules/{rule}/test', [App\Http\Controllers\SmsRuleController::class, 'test'])
+        ->name('rules.test');
+    
+    // Actions avancées (NOUVEAU)
+    Route::post('/rules/{rule}/generate', [App\Http\Controllers\SmsRuleController::class, 'generate'])
+        ->name('rules.generate');
+    
+    Route::post('/rules/{rule}/pause', [App\Http\Controllers\SmsRuleController::class, 'pause'])
+        ->name('rules.pause');
+    
+    Route::post('/rules/{rule}/resume', [App\Http\Controllers\SmsRuleController::class, 'resume'])
+        ->name('rules.resume');
+});
 
 // ============================================
 // Organization Settings (CLIENT - sa propre org)
