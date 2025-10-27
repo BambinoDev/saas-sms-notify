@@ -68,6 +68,12 @@ class Organization extends Model
         'onboarding_completed_at',
         'onboarding_step',
         'last_commcare_sync_at',
+        
+        // Sending Settings
+        'default_send_time',
+        'send_window_start',
+        'send_window_end',
+        'default_language',
     ];
 
     /**

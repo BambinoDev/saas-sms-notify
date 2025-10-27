@@ -187,3 +187,17 @@ Route::middleware(['auth', 'superadmin'])->prefix('admin')->name('admin.')->grou
     Route::put('/organizations/{organization}/members/{user}/role', [AdminOrganizationsController::class, 'updateMemberRole'])->name('organizations.update-member-role');
     Route::delete('/organizations/{organization}/members/{user}', [AdminOrganizationsController::class, 'removeMember'])->name('organizations.remove-member');
 });
+
+// Routes Paramètres (Settings)
+Route::middleware(['auth'])->prefix('settings')->name('settings.')->group(function () {
+    Route::get('/', [SettingsController::class, 'index'])->name('index');
+    Route::get('/general', [SettingsController::class, 'general'])->name('general');
+    Route::get('/sync', [SettingsController::class, 'sync'])->name('sync');
+    Route::get('/sms', [SettingsController::class, 'sms'])->name('sms');
+    Route::post('/sms/update', [SettingsController::class, 'smsUpdate'])->name('sms.update');
+    Route::post('/sms/test', [SettingsController::class, 'smsTest'])->name('sms.test');
+    Route::get('/mapping', [SettingsController::class, 'mapping'])->name('mapping');
+    Route::post('/mapping/update', [SettingsController::class, 'mappingUpdate'])->name('mapping.update');
+    Route::get('/sending', [SettingsController::class, 'sending'])->name('sending');
+    Route::post('/sending/update', [SettingsController::class, 'sendingUpdate'])->name('sending.update');
+});

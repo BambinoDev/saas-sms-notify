@@ -1,7 +1,7 @@
 <template>
   <AppLayout title="Modifier Règle SMS">
-    <div class="py-12">
-      <div class="max-w-4xl mx-auto sm:px-6 lg:px-8">
+        <div class="py-12">
+            <div class="max-w-4xl mx-auto sm:px-6 lg:px-8">
         <!-- Breadcrumb -->
         <nav class="mb-6 flex items-center gap-2 text-sm text-gray-600">
           <Link href="/rules" class="hover:text-blue-600">Règles SMS</Link>
@@ -11,7 +11,7 @@
           <span class="text-gray-900 font-medium">Modifier règle</span>
         </nav>
 
-        <!-- Header -->
+                <!-- Header -->
         <div class="mb-6">
           <h1 class="text-3xl font-bold text-gray-900">Modifier la règle SMS</h1>
           <p class="mt-2 text-sm text-gray-600">
@@ -28,72 +28,72 @@
                 <div class="w-10 h-10 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold text-lg">
                   1
                 </div>
-                <div>
+                    <div>
                   <h2 class="text-lg font-semibold text-gray-900">Informations générales</h2>
                   <p class="text-sm text-gray-600">Nommez et décrivez votre règle</p>
                 </div>
-              </div>
-            </div>
+                    </div>
+                </div>
 
             <div class="p-6 space-y-4">
-              <!-- Nom -->
-              <div>
+                            <!-- Nom -->
+                            <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">
                   Nom de la règle *
                   <span class="text-gray-500 font-normal ml-2">
                     (ex: "Rappel RDV J-2", "Message bienvenue")
                   </span>
-                </label>
-                <input
-                  v-model="form.name"
-                  type="text"
-                  required
+                                </label>
+                                <input
+                                    v-model="form.name"
+                                    type="text"
+                                    required
                   placeholder="Donnez un nom court et explicite"
                   class="input-field"
                   :class="{ 'border-red-500': form.errors.name }"
-                />
+                                />
                 <p v-if="form.errors.name" class="mt-1 text-sm text-red-600">{{ form.errors.name }}</p>
-              </div>
+                            </div>
 
-              <!-- Description -->
-              <div>
+                            <!-- Description -->
+                            <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">
                   Description (optionnel)
-                </label>
-                <textarea
-                  v-model="form.description"
-                  rows="2"
+                                </label>
+                                <textarea
+                                    v-model="form.description"
+                                    rows="2"
                   placeholder="Décrivez l'objectif de cette règle..."
                   class="input-field"
-                ></textarea>
-              </div>
+                                ></textarea>
+                            </div>
 
-              <!-- Template -->
-              <div>
+                            <!-- Template -->
+                            <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">
                   Modèle de message *
-                </label>
-                <select
-                  v-model="form.sms_template_id"
-                  required
+                                </label>
+                                <select
+                                    v-model="form.sms_template_id"
+                                    required
                   class="input-field"
                   :class="{ 'border-red-500': form.errors.sms_template_id }"
-                >
+                                >
                   <option value="">-- Choisissez un modèle de message --</option>
-                  <option
-                    v-for="template in templates"
-                    :key="template.id"
-                    :value="template.id"
-                  >
-                    {{ template.name }}
-                  </option>
-                </select>
+                                    <option
+                                        v-for="template in templates"
+                                        :key="template.id"
+                                        :value="template.id"
+                                    >
+                                        {{ template.name }}
+                                    </option>
+                                </select>
                 <p v-if="form.errors.sms_template_id" class="mt-1 text-sm text-red-600">
-                  {{ form.errors.sms_template_id }}
+                                    {{ form.errors.sms_template_id }}
                 </p>
               </div>
-            </div>
-          </div>
+                                </div>
+                            </div>
 
           <!-- ÉTAPE 2 : Déclenchement (LA PARTIE CRITIQUE) -->
           <div class="bg-white shadow-sm rounded-lg border-2 border-blue-300">
@@ -102,7 +102,7 @@
                 <div class="w-10 h-10 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold text-lg">
                   2
                 </div>
-                <div>
+                            <div>
                   <h2 class="text-lg font-semibold text-gray-900">Quand envoyer le SMS ?</h2>
                   <p class="text-sm text-gray-600">
                     Cette section détermine automatiquement quels dossiers recevront le SMS
@@ -247,7 +247,7 @@
                           >
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
                           </svg>
-                        </label>
+                                </label>
                       </div>
 
                       <!-- Vue DÉTAILLÉE -->
@@ -267,7 +267,7 @@
                             <div class="flex items-start gap-4">
                               <input
                                 type="radio"
-                                v-model="form.trigger_field"
+                                    v-model="form.trigger_field"
                                 :value="field.value"
                                 class="mt-1 w-5 h-5 text-blue-600"
                                 @change="updatePreview"
@@ -285,7 +285,7 @@
                                   </span>
                                   <span v-else>{{ field.icon }}</span>
                                 </div>
-                              </div>
+                            </div>
                               <div class="flex-1">
                                 <h4 
                                   class="text-base font-bold mb-1"
@@ -298,7 +298,7 @@
                                 </h4>
                                 <p class="text-sm text-gray-600">{{ field.description }}</p>
                                 <p class="text-xs text-blue-600 mt-1">{{ field.example }}</p>
-                              </div>
+                                </div>
                               <svg
                                 v-if="form.trigger_field === field.value"
                                 class="w-6 h-6 text-blue-600 flex-shrink-0"
@@ -405,16 +405,16 @@
                 </label>
 
                 <div class="grid grid-cols-2 gap-4">
-                  <!-- Valeur -->
-                  <div>
+                            <!-- Valeur -->
+                            <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">
                       Nombre *
-                    </label>
-                    <input
-                      v-model="form.trigger_value"
+                                </label>
+                                <input
+                                    v-model="form.trigger_value"
                       type="number"
                       min="0"
-                      required
+                                    required
                       placeholder="Ex: 2"
                       class="input-field"
                       @input="handleTriggerValueUpdate"
@@ -422,22 +422,22 @@
                     <p class="mt-1 text-xs text-gray-600">
                       {{ valueHint }}
                     </p>
-                  </div>
+                            </div>
 
-                  <!-- Unité -->
-                  <div>
+                            <!-- Unité -->
+                            <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">
                       Unité *
-                    </label>
-                    <select
-                      v-model="form.trigger_unit"
-                      required
+                                </label>
+                                <select
+                                    v-model="form.trigger_unit"
+                                    required
                       class="input-field"
                       @change="updatePreview"
-                    >
+                                >
                       <option value="days">Jours</option>
-                      <option value="hours">Heures</option>
-                    </select>
+                                    <option value="hours">Heures</option>
+                                </select>
                   </div>
                 </div>
               </div>
@@ -466,8 +466,8 @@
                   </div>
                 </div>
               </div>
-            </div>
-          </div>
+                                </div>
+                            </div>
 
           <!-- ÉTAPE 3 : Fréquence génération automatique -->
           <div class="bg-white shadow-sm rounded-lg border border-gray-200">
@@ -476,62 +476,62 @@
                 <div class="w-10 h-10 bg-green-600 text-white rounded-full flex items-center justify-center font-bold text-lg">
                   3
                 </div>
-                <div>
+                            <div>
                   <h2 class="text-lg font-semibold text-gray-900">Fréquence de vérification automatique</h2>
                   <p class="text-sm text-gray-600">
                     À quelle fréquence le système doit-il vérifier les dossiers éligibles ?
                   </p>
-                </div>
-              </div>
-            </div>
+                                </div>
+                                </div>
+                            </div>
 
             <div class="p-6 space-y-4">
               <!-- Fréquence -->
-              <div>
+                            <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">
                   Fréquence de vérification *
-                </label>
-                <select
-                  v-model="form.generation_frequency"
-                  required
+                                </label>
+                                <select
+                                    v-model="form.generation_frequency"
+                                    required
                   class="input-field"
                 >
                   <option value="daily">📅 Quotidien - Tous les jours</option>
                   <option value="weekly">📆 Hebdomadaire - 1 fois par semaine</option>
                   <option value="monthly">🗓️ Mensuel - 1 fois par mois</option>
-                </select>
+                                </select>
                 <div class="mt-2 p-3 bg-blue-50 border border-blue-200 rounded text-sm">
                   <strong>💡 Recommandation :</strong>
                   <span class="text-gray-700">
                     Pour les rappels de RDV, utilisez <strong>Quotidien</strong> pour ne manquer aucun dossier.
                   </span>
-                </div>
-              </div>
+                                </div>
+                            </div>
 
               <!-- Heure génération -->
-              <div>
+                            <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">
                   Heure de vérification *
-                </label>
-                <input
-                  v-model="form.generation_time"
-                  type="time"
-                  required
+                                </label>
+                                <input
+                                    v-model="form.generation_time"
+                                    type="time"
+                                    required
                   class="input-field"
                 />
                 <p class="mt-1 text-xs text-gray-600">
                   💡 <strong>Conseil :</strong> Choisissez une heure de nuit (ex: 01:00) pour ne pas surcharger le système en journée
                 </p>
-              </div>
+                            </div>
 
               <!-- Jour semaine (si weekly) -->
-              <div v-if="form.generation_frequency === 'weekly'">
+                            <div v-if="form.generation_frequency === 'weekly'">
                 <label class="block text-sm font-medium text-gray-700 mb-2">
                   Jour de la semaine *
-                </label>
-                <select
+                                </label>
+                                <select
                   v-model.number="form.generation_day_of_week"
-                  required
+                                    required
                   class="input-field"
                 >
                   <option :value="1">Lundi</option>
@@ -541,7 +541,7 @@
                   <option :value="5">Vendredi</option>
                   <option :value="6">Samedi</option>
                   <option :value="0">Dimanche</option>
-                </select>
+                                </select>
               </div>
 
               <!-- Jour mois (si monthly) -->
@@ -575,14 +575,14 @@
                     À quelle heure envoyer les SMS aux bénéficiaires ?
                   </p>
                 </div>
-              </div>
-            </div>
+                                </div>
+                            </div>
 
             <div class="p-6">
               <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">
                   Heure d'envoi (optionnel)
-                </label>
+                                </label>
                 <input
                   v-model="form.send_time"
                   type="time"
@@ -596,8 +596,8 @@
                   </span>
                 </div>
               </div>
-            </div>
-          </div>
+                                </div>
+                            </div>
 
           <!-- ÉTAPE 5 : Options avancées -->
           <div class="bg-white shadow-sm rounded-lg border border-gray-200">
@@ -606,11 +606,11 @@
                 <div class="w-10 h-10 bg-gray-600 text-white rounded-full flex items-center justify-center font-bold text-lg">
                   5
                 </div>
-                <div>
+                            <div>
                   <h2 class="text-lg font-semibold text-gray-900">Options avancées</h2>
                   <p class="text-sm text-gray-600">Paramètres optionnels</p>
-                </div>
-              </div>
+                                </div>
+                                </div>
             </div>
 
             <div class="p-6 space-y-4">
@@ -629,30 +629,30 @@
                 <p class="mt-1 text-xs text-gray-600">
                   💡 Les règles prioritaires (0-2) seront exécutées en premier
                 </p>
-              </div>
+                            </div>
 
-              <!-- Limite quotidienne -->
-              <div>
+                            <!-- Limite quotidienne -->
+                            <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">
                   Limite quotidienne de SMS (optionnel)
-                </label>
-                <input
+                                </label>
+                                <input
                   v-model.number="form.daily_limit"
-                  type="number"
-                  min="1"
+                                    type="number"
+                                    min="1"
                   placeholder="Illimité"
                   class="input-field"
                 />
                 <p class="mt-1 text-xs text-gray-600">
                   💡 Utile pour contrôler les coûts. Laissez vide pour ne pas limiter.
                 </p>
-              </div>
+                            </div>
 
               <!-- Activer -->
               <div class="flex items-center gap-3 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                <input
-                  v-model="form.is_active"
-                  type="checkbox"
+                                <input
+                                    v-model="form.is_active"
+                                    type="checkbox"
                   id="is_active"
                   class="w-5 h-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                 />
@@ -663,19 +663,19 @@
                   <p class="text-xs text-gray-600 mt-1">
                     Si décoché, la règle sera créée mais inactive
                   </p>
-                </label>
+                                </label>
               </div>
             </div>
-          </div>
+                            </div>
 
           <!-- Actions -->
           <div class="flex justify-end gap-3 pt-6 border-t">
-            <Link
-              href="/rules"
+                                <Link
+                                    href="/rules"
               class="btn-secondary"
-            >
-              Annuler
-            </Link>
+                                >
+                                    Annuler
+                                </Link>
             <button
               type="submit"
               :disabled="form.processing"
@@ -690,11 +690,11 @@
                 Modification...
               </span>
             </button>
-          </div>
-        </form>
-      </div>
-    </div>
-  </AppLayout>
+                            </div>
+                        </form>
+            </div>
+        </div>
+    </AppLayout>
 </template>
 
 <script setup>
