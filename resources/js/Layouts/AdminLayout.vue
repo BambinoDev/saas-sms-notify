@@ -1,6 +1,7 @@
 <script setup>
 import { Link, usePage } from '@inertiajs/vue3';
 import { computed } from 'vue';
+import GriotLogo from '@/Components/Branding/GriotLogo.vue';
 
 defineProps({
   title: String,
@@ -18,12 +19,14 @@ const currentRoute = computed(() => page.url);
         <div class="flex justify-between h-16">
           <div class="flex items-center gap-8">
             <!-- Logo Admin -->
-            <Link href="/admin" class="flex items-center gap-2 text-white font-bold text-xl">
-              <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-              </svg>
-              Administration
-            </Link>
+            <div class="flex items-center gap-3">
+              <GriotLogo 
+                variant="white" 
+                height="36"
+                href="/admin" 
+              />
+              <span class="text-white/70 text-sm border-l border-white/30 pl-3">Administration</span>
+            </div>
 
             <!-- Navigation -->
             <div class="hidden md:flex gap-4">
@@ -85,7 +88,7 @@ const currentRoute = computed(() => page.url);
     <footer class="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 mt-12">
       <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
         <p class="text-center text-sm text-gray-500 dark:text-gray-400">
-          🔒 Espace Administration S-Remind · Multi-Tenant SAAS Platform
+          🔒 Espace Administration GRIOT · Multi-Tenant SAAS Platform
         </p>
       </div>
     </footer>

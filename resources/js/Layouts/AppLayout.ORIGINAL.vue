@@ -1,17 +1,14 @@
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue';
+import { ref, computed } from 'vue';
 import { Link, usePage } from '@inertiajs/vue3';
 import { useAuth } from '@/Composables/useAuth';
 import { useI18n } from 'vue-i18n';
 import LanguageSwitcher from '@/Components/LanguageSwitcher.vue';
-import GriotLogo from '@/Components/Branding/GriotLogo.vue'; // ✅ AJOUTÉ
 
 const { t } = useI18n();
 
 const sidebarOpen = ref(true);
 const userMenuOpen = ref(false);
-const isSidebarCollapsed = ref(false);
-const isMobileMenuOpen = ref(false);
 
 const page = usePage();
 const { user, organization } = useAuth();
@@ -70,164 +67,87 @@ const secondaryNavigation = computed(() => [
     current: currentRoute.startsWith('/support')
   },
 ]);
-
-// Organization computed (multi-tenant safe)
-const currentOrganization = computed(() => {
-  return page.props?.auth?.organization || page.props?.auth?.user?.organization || organization || null;
-});
-
-const organizationName = computed(() => {
-  return currentOrganization.value?.name || 'Mon Organisation';
-});
-
-const organizationPlan = computed(() => {
-  return currentOrganization.value?.plan || 'Plan Standard';
-});
-
-// Sidebar preferences (persist in localStorage)
-onMounted(() => {
-  try {
-    const saved = localStorage.getItem('sidebar-collapsed');
-    if (saved !== null) {
-      isSidebarCollapsed.value = saved === 'true';
-    }
-  } catch (_) {}
-});
-
-watch(isSidebarCollapsed, (val) => {
-  try {
-    localStorage.setItem('sidebar-collapsed', String(val));
-  } catch (_) {}
-});
-
-const toggleSidebar = () => {
-  isSidebarCollapsed.value = !isSidebarCollapsed.value;
-};
-
-const toggleMobileMenu = () => {
-  isMobileMenuOpen.value = !isMobileMenuOpen.value;
-};
 </script>
 
 <template>
-  <div class="min-h-screen bg-dark-50 overflow-x-hidden">
+  <div class="min-h-screen bg-dark-50">
     
     <!-- Sidebar -->
-    <!-- Mobile overlay -->
-    <div 
-      v-if="isMobileMenuOpen && !sidebarOpen"
-      @click="toggleMobileMenu"
-      class="fixed inset-0 bg-black/50 z-40 md:hidden"
-    />
-
     <aside 
       :class="[
-        'fixed inset-y-0 left-0 z-50 flex flex-col transition-all duration-300 ease-in-out overflow-x-hidden',
-        isSidebarCollapsed ? 'w-20' : 'w-64',
-        (sidebarOpen || isMobileMenuOpen) ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
+        'fixed inset-y-0 left-0 z-50 flex w-64 flex-col transition-transform duration-300',
+        sidebarOpen ? 'translate-x-0' : '-translate-x-full'
       ]"
     >
       <!-- Sidebar Content -->
       <div class="flex flex-col flex-1 bg-white border-r border-dark-200">
         
-        <!-- Logo ✅ MODIFIÉ POUR GRIOT -->
+        <!-- Logo -->
         <div class="flex items-center h-16 px-6 border-b border-dark-100">
-          <GriotLogo 
-            variant="compact" 
-            height="40" 
-            href="/dashboard"
-          />
-          <button 
-            @click="toggleSidebar" 
-            class="ml-auto p-2 hover:bg-dark-100 rounded-lg transition-colors"
-            title="Réduire/Agrandir"
-          >
-            <svg 
-              class="w-5 h-5 text-dark-600 transition-transform" 
-              :class="{ 'rotate-180': isSidebarCollapsed }"
-              fill="none" stroke="currentColor" viewBox="0 0 24 24"
-            >
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
-            </svg>
-          </button>
+          <Link href="/dashboard" class="flex items-center space-x-2">
+            <div class="w-8 h-8 bg-gradient-to-br from-primary-500 to-accent-500 rounded-lg flex items-center justify-center">
+              <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+              </svg>
+            </div>
+            <span class="text-xl font-bold text-dark-900">S-Remind</span>
+          </Link>
         </div>
 
         <!-- Organization -->
-        <!-- Organization section (expanded) -->
-        <div v-if="!isSidebarCollapsed" class="px-6 py-4 border-b border-dark-100">
+        <div class="px-6 py-4 border-b border-dark-100">
           <div class="flex items-center space-x-3">
-            <div class="w-10 h-10 bg-gradient-to-br from-griot-terracotta to-griot-orange rounded-lg flex items-center justify-center text-white font-bold text-lg">
-              {{ organizationName.charAt(0).toUpperCase() }}
+            <div class="w-10 h-10 bg-primary-100 rounded-lg flex items-center justify-center flex-shrink-0">
+              <svg class="w-5 h-5 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+              </svg>
             </div>
             <div class="flex-1 min-w-0">
               <p class="text-sm font-semibold text-dark-900 truncate">
-                {{ organizationName }}
+                {{ user?.company_name || 'My Organization' }}
               </p>
-              <p class="text-xs text-dark-500">{{ organizationPlan }}</p>
+              <p class="text-xs text-dark-500">Standard Plan</p>
             </div>
-          </div>
-        </div>
-
-        <!-- Organization section (collapsed) -->
-        <div v-else class="px-2 py-4 border-b border-dark-100 flex justify-center">
-          <div 
-            class="w-10 h-10 bg-gradient-to-br from-griot-terracotta to-griot-orange rounded-lg flex items-center justify-center text-white font-bold text-lg"
-            :title="organizationName"
-          >
-            {{ organizationName.charAt(0).toUpperCase() }}
           </div>
         </div>
 
         <!-- Navigation -->
-        <nav :class="['flex-1 py-4 space-y-1 overflow-y-auto', isSidebarCollapsed ? 'px-2' : 'px-3']">
+        <nav class="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
           <Link
             v-for="item in navigation"
             :key="item.name"
             :href="item.href"
             :class="[
-              'relative group flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors',
+              'flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors',
               item.current
-                ? 'bg-griot-blue-50 text-griot-blue-700'
+                ? 'bg-primary-50 text-primary-700'
                 : 'text-dark-700 hover:bg-dark-100 hover:text-dark-900'
             ]"
           >
-            <svg :class="['w-5 h-5', isSidebarCollapsed ? '' : 'mr-3']" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="item.icon" />
             </svg>
-            <span v-if="!isSidebarCollapsed">{{ item.name }}</span>
-            <!-- Tooltip on collapsed -->
-            <span 
-              v-else 
-              class="pointer-events-none absolute left-20 z-50 px-2 py-1 rounded bg-gray-900 text-white text-xs opacity-0 group-hover:opacity-100 transition-opacity"
-            >
-              {{ item.name }}
-            </span>
+            {{ item.name }}
           </Link>
         </nav>
 
         <!-- Secondary Navigation -->
-        <div :class="[isSidebarCollapsed ? 'px-2' : 'px-3', 'py-4 border-t border-dark-100 space-y-1']">
+        <div class="px-3 py-4 border-t border-dark-100 space-y-1">
           <Link
             v-for="item in secondaryNavigation"
             :key="item.name"
             :href="item.href"
             :class="[
-              'relative group flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors',
+              'flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors',
               item.current
-                ? 'bg-griot-blue-50 text-griot-blue-700'
+                ? 'bg-primary-50 text-primary-700'
                 : 'text-dark-700 hover:bg-dark-100 hover:text-dark-900'
             ]"
           >
-            <svg :class="['w-5 h-5', isSidebarCollapsed ? '' : 'mr-3']" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="item.icon" />
             </svg>
-            <span v-if="!isSidebarCollapsed">{{ item.name }}</span>
-            <span 
-              v-else 
-              class="pointer-events-none absolute left-20 z-50 px-2 py-1 rounded bg-gray-900 text-white text-xs opacity-0 group-hover:opacity-100 transition-opacity"
-            >
-              {{ item.name }}
-            </span>
+            {{ item.name }}
           </Link>
         </div>
 
@@ -235,7 +155,7 @@ const toggleMobileMenu = () => {
     </aside>
 
     <!-- Main Content -->
-    <div :class="['transition-all duration-300', sidebarOpen ? (isSidebarCollapsed ? 'lg:pl-20' : 'lg:pl-64') : '']">
+    <div :class="['transition-all duration-300', sidebarOpen ? 'lg:pl-64' : '']">
       
       <!-- Top Header -->
       <header class="sticky top-0 z-40 bg-white border-b border-dark-200 shadow-sm">
@@ -244,7 +164,7 @@ const toggleMobileMenu = () => {
           <!-- Left: Toggle + Breadcrumb -->
           <div class="flex items-center space-x-4">
             <button
-              @click="() => { sidebarOpen = !sidebarOpen; if (sidebarOpen) isMobileMenuOpen = true; }"
+              @click="sidebarOpen = !sidebarOpen"
               class="p-2 text-dark-500 hover:text-dark-900 hover:bg-dark-100 rounded-lg transition-colors lg:hidden"
             >
               <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -282,7 +202,7 @@ const toggleMobileMenu = () => {
                 @click="userMenuOpen = !userMenuOpen"
                 class="flex items-center space-x-3 p-2 rounded-lg hover:bg-dark-100 transition-colors"
               >
-                <div class="w-8 h-8 bg-gradient-to-br from-griot-terracotta to-griot-orange rounded-full flex items-center justify-center text-white font-semibold text-sm">
+                <div class="w-8 h-8 bg-gradient-to-br from-primary-500 to-accent-500 rounded-full flex items-center justify-center text-white font-semibold text-sm">
                   {{ user?.name?.charAt(0) || 'U' }}
                 </div>
                 <div class="hidden md:block text-left">

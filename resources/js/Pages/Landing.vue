@@ -1,6 +1,7 @@
 <script setup>
 import { Head } from '@inertiajs/vue3';
 import Button from '@/Components/ui/Button.vue';
+import GriotLogo from '@/Components/Branding/GriotLogo.vue';
 import { ref, onMounted } from 'vue';
 
 const isVisible = ref(false);
@@ -15,20 +16,13 @@ onMounted(() => {
 <template>
   <Head title="S-Remind - Automatisez vos envois SMS" />
 
-  <div class="min-h-screen bg-gradient-to-br from-dark-50 via-white to-primary-50/30">
+  <div class="min-h-screen bg-gradient-to-br from-dark-50 via-white to-griot-blue-50/30">
     <!-- Header -->
     <header class="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-md border-b border-dark-100">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex items-center justify-between h-16">
-          <!-- Logo -->
-          <div class="flex items-center space-x-2">
-            <div class="w-8 h-8 bg-gradient-to-br from-primary-500 to-accent-500 rounded-lg flex items-center justify-center">
-              <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
-              </svg>
-            </div>
-            <span class="text-xl font-bold text-dark-900">S-Remind</span>
-          </div>
+          <!-- Logo (transparent icon) -->
+          <GriotLogo variant="icon" height="32" />
 
           <!-- Navigation -->
           <div class="flex items-center space-x-4">
@@ -57,14 +51,14 @@ onMounted(() => {
           >
             <div class="relative w-full aspect-square max-w-lg mx-auto">
               <!-- Background glow -->
-              <div class="absolute inset-0 bg-gradient-to-br from-primary-500/20 via-accent-500/20 to-secondary-500/20 rounded-3xl blur-3xl"></div>
+              <div class="absolute inset-0 bg-gradient-to-br from-griot-terracotta/20 via-griot-orange/20 to-griot-blue/20 rounded-3xl blur-3xl"></div>
               
               <!-- Card container -->
               <div class="relative bg-white/50 backdrop-blur-sm rounded-3xl border border-dark-100 p-12 shadow-2xl">
                 
                 <!-- Animated Calendar Icon -->
                 <div class="relative mb-8 animate-pulse-slow">
-                  <div class="w-48 h-48 mx-auto bg-gradient-to-br from-primary-500 to-accent-500 rounded-2xl shadow-2xl transform hover:scale-105 transition-transform duration-300">
+                  <div class="w-48 h-48 mx-auto bg-gradient-to-br from-griot-terracotta to-griot-orange rounded-2xl shadow-2xl transform hover:scale-105 transition-transform duration-300">
                     <div class="absolute inset-0 flex flex-col items-center justify-center text-white">
                       <div class="text-sm font-semibold mb-2">MARS 2025</div>
                       <div class="text-6xl font-bold">15</div>
@@ -93,8 +87,8 @@ onMounted(() => {
                 </div>
 
                 <!-- Decorative lines -->
-                <div class="absolute top-1/4 -left-8 w-24 h-0.5 bg-gradient-to-r from-transparent via-primary-500/50 to-transparent"></div>
-                <div class="absolute bottom-1/4 -right-8 w-24 h-0.5 bg-gradient-to-r from-transparent via-accent-500/50 to-transparent"></div>
+                <div class="absolute top-1/4 -left-8 w-24 h-0.5 bg-gradient-to-r from-transparent via-griot-terracotta/50 to-transparent"></div>
+                <div class="absolute bottom-1/4 -right-8 w-24 h-0.5 bg-gradient-to-r from-transparent via-griot-orange/50 to-transparent"></div>
               </div>
             </div>
           </div>
